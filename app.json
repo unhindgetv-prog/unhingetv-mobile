@@ -28,7 +28,7 @@
         "backgroundColor": "#000000"
       },
       "package": "com.unhingetv.app",
-      "versionCode": 1,
+      "versionCode": 4,
       "edgeToEdgeEnabled": true,
       "intentFilters": [
         {
@@ -46,7 +46,9 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-video"
+      "expo-video",
+      "expo-font",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true
