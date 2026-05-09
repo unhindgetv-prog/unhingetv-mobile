@@ -17,7 +17,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.unhingetv.app",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#000000",
+      "infoPlist": {
+        "UIRequiresFullScreen": true
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -26,7 +29,15 @@
       },
       "package": "com.unhingetv.app",
       "versionCode": 1,
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "intentFilters": [
+        {
+          "action": "android.intent.action.MAIN",
+          "category": [
+            "android.intent.category.LEANBACK_LAUNCHER"
+          ]
+        }
+      ]
     },
     "web": {
       "bundler": "metro",

@@ -6,26 +6,38 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "ios": {
-        "simulator": true
-      }
+      "ios": { "simulator": true },
+      "android": { "buildType": "apk" }
     },
     "preview": {
       "distribution": "internal",
-      "ios": {
-        "simulator": false
-      },
-      "android": {
-        "buildType": "apk"
-      }
+      "ios": { "simulator": false },
+      "android": { "buildType": "apk" }
     },
     "production": {
       "autoIncrement": true,
+      "ios": { "buildConfiguration": "Release" },
+      "android": { "buildType": "app-bundle" }
+    },
+    "apple-tv": {
+      "autoIncrement": true,
       "ios": {
-        "buildConfiguration": "Release"
-      },
+        "buildConfiguration": "Release",
+        "scheme": "UnhingeTV-tvOS"
+      }
+    },
+    "android-tv": {
+      "autoIncrement": true,
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "app-bundle",
+        "gradleCommand": ":app:bundleRelease"
+      }
+    },
+    "fire-tv": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
       }
     }
   },
