@@ -58,11 +58,18 @@ export interface AuthUser {
 }
 
 export async function login(email: string, password: string): Promise<AuthUser> {
-  // NextAuth credentials login via POST /api/auth/callback/credentials
+  // Step 1: fetch CSRF token required by NextAuth v5
+  const csrfRes = await fetch(`${BASE_URL}/api/auth/csrf`);
+  const { csrfToken } = (await csrfRes.json()) as { csrfToken: string };
+
+  // Step 2: POST credentials with the real CSRF token
   const res = await fetch(`${BASE_URL}/api/auth/callback/credentials`, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ email, password, csrfToken: "", json: "true" }),
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Cookie: csrfRes.headers.get("set-cookie") ?? "",
+    },
+    body: new URLSearchParams({ email, password, csrfToken, json: "true" }),
     redirect: "manual",
   });
 
@@ -160,9 +167,12 @@ export async function getSubscription(token: string): Promise<{
   currentPeriodEnd: string | null;
 } | null> {
   try {
-    return await apiFetch(`/api/subscriptions`, {
-      headers: { Cookie: `next-auth.session-token=${token}` },
-    });
+    // API returns { subscription: sub | null }
+    const data = await apiFetch<{ subscription: { status: string; plan: string; currentPeriodEnd: string | null } | null }>(
+      `/api/subscriptions`,
+      { headers: { Cookie: `next-auth.session-token=${token}` } }
+    );
+    return data.subscription ?? null;
   } catch {
     return null;
   }
