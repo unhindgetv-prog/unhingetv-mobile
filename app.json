@@ -27,6 +27,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
+      "banner": "./assets/tv-banner.png",
       "package": "com.unhingetv.app",
       "versionCode": 5,
       "edgeToEdgeEnabled": true,
