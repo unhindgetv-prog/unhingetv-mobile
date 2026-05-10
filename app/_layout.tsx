@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { Stack } from "expo-router";
+import { Platform } from "react-native";
+import { Stack, Redirect } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { AuthProvider } from "../hooks/useAuth";
 
@@ -14,8 +15,10 @@ export default function RootLayout() {
           animation: "slide_from_right",
         }}
       >
-        <Stack.Screen name="(tabs)"   options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)"   options={{ headerShown: false, animation: "slide_from_bottom" }} />
+        {/* TV platforms get their own screen hierarchy */}
+        <Stack.Screen name="(tv)"    options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)"  options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)"  options={{ headerShown: false, animation: "slide_from_bottom" }} />
         <Stack.Screen name="show/[slug]" options={{ headerShown: false }} />
         <Stack.Screen name="watch/[id]"  options={{ headerShown: false, animation: "fade" }} />
       </Stack>
