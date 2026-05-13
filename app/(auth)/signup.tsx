@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Linking,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -109,8 +110,20 @@ export default function SignupScreen() {
 
           <Text style={styles.terms}>
             By creating an account you agree to our{" "}
-            <Text style={styles.termsLink}>Terms of Service</Text> and{" "}
-            <Text style={styles.termsLink}>Privacy Policy</Text>.
+            <Text
+              style={styles.termsLink}
+              onPress={() => Linking.openURL("https://unhingetv.com/terms")}
+            >
+              Terms of Service
+            </Text>{" "}
+            and{" "}
+            <Text
+              style={styles.termsLink}
+              onPress={() => Linking.openURL("https://unhingetv.com/privacy")}
+            >
+              Privacy Policy
+            </Text>
+            .
           </Text>
 
           <TouchableOpacity

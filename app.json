@@ -18,8 +18,13 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.unhingetv.app",
       "backgroundColor": "#000000",
+      "associatedDomains": [
+        "applinks:unhingetv.com",
+        "applinks:www.unhingetv.com"
+      ],
       "infoPlist": {
-        "UIRequiresFullScreen": true
+        "UIRequiresFullScreen": true,
+        "NSUserTrackingUsageDescription": "We use this to measure ad performance and improve recommendations. UnhingeTV will never sell your data."
       }
     },
     "android": {
@@ -37,6 +42,15 @@
           "category": [
             "LEANBACK_LAUNCHER"
           ]
+        },
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            { "scheme": "https", "host": "unhingetv.com" },
+            { "scheme": "https", "host": "www.unhingetv.com" }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ]
     },
