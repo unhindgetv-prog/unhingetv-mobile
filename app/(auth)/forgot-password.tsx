@@ -7,22 +7,35 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   Alert,
   ScrollView,
+  Dimensions,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from "expo-linear-gradient";
+import { Mail } from "lucide-react-native";
 import Constants from "expo-constants";
-import { Colors, FontSizes, Radius, Spacing } from "../../constants/theme";
+import {
+  Colors,
+  Fonts,
+  FontSizes,
+  Radius,
+  Spacing,
+  Glow,
+} from "../../constants/theme";
+import { BrandLogo, PrimaryButton, GlassCard } from "../../components/ui";
+
+const { height: SCREEN_H } = Dimensions.get("window");
 
 const BASE_URL =
   (Constants.expoConfig?.extra?.apiUrl as string) ?? "https://unhingetv.vercel.app";
 
 export default function ForgotPasswordScreen() {
-  const [email, setEmail]     = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sent, setSent]       = useState(false);
+  const [sent, setSent] = useState(false);
+  const [focused, setFocused] = useState(false);
 
   async function handleSubmit() {
     if (!email.trim()) {
@@ -31,15 +44,14 @@ export default function ForgotPasswordScreen() {
     }
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
+      await fetch(`${BASE_URL}/api/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
-      // Always show success — prevents email enumeration
       setSent(true);
     } catch {
-      // Show success anyway
+      // Always show success — prevents email enumeration
       setSent(true);
     } finally {
       setLoading(false);
@@ -47,50 +59,57 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
+    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <StatusBar style="light" />
+      <LinearGradient
+        colors={["#1a0000", "#000000", "#000000"] as readonly [string, string, string]}
+        locations={[0, 0.4, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+      <View style={styles.redGlowBlob} pointerEvents="none" />
+
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {/* Logo */}
         <View style={styles.logoWrap}>
-          <Text style={styles.logoText}>UNHINGE</Text>
-          <View style={styles.logoBadge}>
-            <Text style={styles.logoTv}>TV</Text>
-          </View>
+          <BrandLogo size="lg" />
         </View>
 
-        <Text style={styles.title}>Forgot password?</Text>
-        <Text style={styles.subtitle}>
-          Enter your email and we'll send you a reset link.
-        </Text>
+        <Text style={styles.eyebrow}>· RESET ACCESS ·</Text>
+        <Text style={styles.title}>FORGOT PASSWORD</Text>
+        <Text style={styles.subtitle}>We&apos;ll send you a reset link.</Text>
 
         {sent ? (
-          <View style={styles.successBox}>
-            <Text style={styles.successIcon}>📬</Text>
-            <Text style={styles.successTitle}>Check your inbox</Text>
-            <Text style={styles.successBody}>
-              If an account exists for {email}, you'll receive a password reset email within
-              a few minutes. Check your spam folder if it doesn't arrive.
-            </Text>
-            <TouchableOpacity
-              style={styles.btn}
-              onPress={() => router.replace("/(auth)/login")}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.btnText}>Back to Sign In</Text>
-            </TouchableOpacity>
-          </View>
+          <GlassCard redTint glow style={{ marginTop: Spacing.lg }}>
+            <View style={styles.successInner}>
+              <View style={styles.successIconWrap}>
+                <Mail size={28} color={Colors.white} />
+              </View>
+              <Text style={styles.successTitle}>CHECK YOUR INBOX</Text>
+              <Text style={styles.successBody}>
+                If an account exists for{" "}
+                <Text style={{ color: Colors.white, fontWeight: "700" }}>{email}</Text>, a reset
+                link is on the way. Don&apos;t forget the spam folder.
+              </Text>
+              <PrimaryButton
+                label="Back to Sign In"
+                onPress={() => router.replace("/(auth)/login")}
+                size="lg"
+                fullWidth
+                style={{ marginTop: Spacing.md }}
+              />
+            </View>
+          </GlassCard>
         ) : (
           <View style={styles.form}>
             <View style={styles.fieldWrap}>
-              <Text style={styles.label}>Email address</Text>
+              <Text style={styles.label}>EMAIL ADDRESS</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, focused && styles.inputFocused]}
                 value={email}
                 onChangeText={setEmail}
                 placeholder="you@example.com"
@@ -100,26 +119,24 @@ export default function ForgotPasswordScreen() {
                 autoCorrect={false}
                 returnKeyType="send"
                 onSubmitEditing={handleSubmit}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
               />
             </View>
 
-            <TouchableOpacity
-              style={[styles.btn, loading && styles.btnDisabled]}
+            <PrimaryButton
+              label="Send Reset Link"
               onPress={handleSubmit}
-              disabled={loading}
-              activeOpacity={0.85}
-            >
-              {loading
-                ? <ActivityIndicator color={Colors.white} size="small" />
-                : <Text style={styles.btnText}>Send Reset Link</Text>
-              }
-            </TouchableOpacity>
+              loading={loading}
+              size="lg"
+              fullWidth
+            />
           </View>
         )}
 
         <Link href="/(auth)/login" asChild>
           <TouchableOpacity style={styles.backWrap} activeOpacity={0.7}>
-            <Text style={styles.backText}>← Back to Sign In</Text>
+            <Text style={styles.backText}>← BACK TO SIGN IN</Text>
           </TouchableOpacity>
         </Link>
       </ScrollView>
@@ -128,9 +145,16 @@ export default function ForgotPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: Colors.black,
+  root: { flex: 1, backgroundColor: Colors.black },
+  redGlowBlob: {
+    position: "absolute",
+    top: -SCREEN_H * 0.15,
+    left: -120,
+    width: 380,
+    height: 380,
+    borderRadius: 190,
+    backgroundColor: Colors.red,
+    opacity: 0.15,
   },
   scroll: {
     flexGrow: 1,
@@ -138,59 +162,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.xxl,
   },
-  logoWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "center",
-    marginBottom: Spacing.xl,
-  },
-  logoText: {
-    fontSize: 34,
-    fontWeight: "900",
-    color: Colors.white,
-    letterSpacing: 4,
-  },
-  logoBadge: {
-    backgroundColor: Colors.red,
-    borderRadius: Radius.sm,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginLeft: 6,
-  },
-  logoTv: {
-    fontSize: 22,
-    fontWeight: "900",
-    color: Colors.white,
-    letterSpacing: 1,
+  logoWrap: { alignItems: "center", marginBottom: Spacing.lg },
+  eyebrow: {
+    fontFamily: Fonts.barlow,
+    color: Colors.red,
+    fontSize: 11,
+    letterSpacing: 3,
+    textAlign: "center",
+    fontWeight: "700",
+    marginBottom: 6,
+    includeFontPadding: false,
   },
   title: {
-    fontSize: FontSizes.xxl,
-    fontWeight: "800",
+    fontFamily: Fonts.bebas,
+    fontSize: 38,
     color: Colors.white,
     textAlign: "center",
-    marginBottom: 6,
+    letterSpacing: 2,
+    includeFontPadding: false,
   },
   subtitle: {
     fontSize: FontSizes.sm,
-    color: Colors.textMuted,
-    textAlign: "center",
-    marginBottom: Spacing.xl,
-    lineHeight: 20,
-  },
-  form: {
-    gap: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  fieldWrap: {
-    gap: 6,
-  },
-  label: {
-    fontSize: FontSizes.sm,
-    fontWeight: "600",
     color: Colors.textSub,
+    textAlign: "center",
+    marginTop: 4,
+    marginBottom: Spacing.xl,
+  },
+  form: { gap: Spacing.md, marginBottom: Spacing.lg },
+  fieldWrap: { gap: 7 },
+  label: {
+    fontFamily: Fonts.barlow,
+    fontSize: 11,
+    fontWeight: "700",
+    color: Colors.textSub,
+    letterSpacing: 2,
   },
   input: {
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.dark,
     borderWidth: 1,
     borderColor: Colors.cardBorder,
     borderRadius: Radius.md,
@@ -199,59 +207,41 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.md,
     color: Colors.white,
   },
-  btn: {
+  inputFocused: {
+    borderColor: Colors.redBorder,
+    ...Glow.redSm,
+  },
+  successInner: { padding: Spacing.lg, alignItems: "center", gap: Spacing.sm },
+  successIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: Colors.red,
-    borderRadius: Radius.md,
-    paddingVertical: 15,
     alignItems: "center",
-    shadowColor: Colors.red,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  btnDisabled: {
-    opacity: 0.6,
-  },
-  btnText: {
-    fontSize: FontSizes.md,
-    fontWeight: "800",
-    color: Colors.white,
-    letterSpacing: 0.5,
-  },
-  successBox: {
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    alignItems: "center",
-    marginBottom: Spacing.lg,
-    gap: Spacing.sm,
-  },
-  successIcon: {
-    fontSize: 40,
+    justifyContent: "center",
+    ...Glow.redMd,
+    marginBottom: Spacing.sm,
   },
   successTitle: {
-    fontSize: FontSizes.xl,
-    fontWeight: "800",
+    fontFamily: Fonts.bebas,
+    fontSize: 26,
     color: Colors.white,
+    letterSpacing: 1.5,
     textAlign: "center",
   },
   successBody: {
     fontSize: FontSizes.sm,
-    color: Colors.textMuted,
+    color: Colors.textSub,
     textAlign: "center",
     lineHeight: 20,
-    marginBottom: Spacing.sm,
+    paddingHorizontal: 4,
   },
-  backWrap: {
-    alignItems: "center",
-    marginTop: Spacing.md,
-  },
+  backWrap: { alignItems: "center", marginTop: Spacing.lg },
   backText: {
-    fontSize: FontSizes.sm,
+    fontFamily: Fonts.barlow,
+    fontSize: 12,
     color: Colors.textMuted,
-    fontWeight: "600",
+    fontWeight: "700",
+    letterSpacing: 1.5,
   },
 });

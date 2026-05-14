@@ -8,9 +8,11 @@ import {
   Alert,
   ScrollView,
   Platform,
+  Dimensions,
 } from "react-native";
 import { router } from "expo-router";
-import { Crown, Check, X } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Crown, Check, X, Sparkles } from "lucide-react-native";
 import type { ProductSubscription } from "react-native-iap";
 import {
   PRODUCT_IDS,
@@ -18,7 +20,17 @@ import {
   formatPrice,
   purchaseSubscription,
 } from "../../lib/iap";
-import { Colors, FontSizes, Radius, Spacing } from "../../constants/theme";
+import {
+  Colors,
+  Fonts,
+  FontSizes,
+  Radius,
+  Spacing,
+  Glow,
+} from "../../constants/theme";
+import { BrandLogo, PrimaryButton, GlassCard } from "../../components/ui";
+
+const { height: SCREEN_H } = Dimensions.get("window");
 
 const PERKS = [
   "Unlimited streaming on every show",
@@ -73,75 +85,96 @@ export default function SubscribeScreen() {
   const yearly = products.find((p) => p.id === PRODUCT_IDS.yearly);
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.scroll}>
-      <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()} hitSlop={12}>
-        <X size={22} color={Colors.white} />
-      </TouchableOpacity>
+    <View style={styles.root}>
+      <LinearGradient
+        colors={["#1a0000", "#000000", "#000000"] as readonly [string, string, string]}
+        locations={[0, 0.5, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+      <View style={styles.glowBlob} pointerEvents="none" />
 
-      <View style={styles.crownWrap}>
-        <Crown size={44} color={Colors.gold} />
-      </View>
-      <Text style={styles.title}>Unlock UnhingeTV</Text>
-      <Text style={styles.subtitle}>
-        Stream everything. Every show, every season.
-      </Text>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()} hitSlop={12}>
+          <X size={20} color={Colors.white} />
+        </TouchableOpacity>
 
-      <View style={styles.perks}>
-        {PERKS.map((perk) => (
-          <View key={perk} style={styles.perkRow}>
-            <Check size={16} color={Colors.green} />
-            <Text style={styles.perkText}>{perk}</Text>
-          </View>
-        ))}
-      </View>
-
-      {loading ? (
-        <ActivityIndicator color={Colors.red} style={{ marginTop: Spacing.xl }} />
-      ) : error ? (
-        <Text style={styles.error}>{error}</Text>
-      ) : (
-        <View style={styles.plans}>
-          {yearly && (
-            <PlanCard
-              title="Yearly"
-              subtitle="Best value — save 15%"
-              price={formatPrice(yearly)}
-              cadence="/year"
-              featured
-              loading={purchasing === PRODUCT_IDS.yearly}
-              onPress={() => handleSubscribe(PRODUCT_IDS.yearly)}
-              disabled={!!purchasing}
-            />
-          )}
-          {monthly && (
-            <PlanCard
-              title="Monthly"
-              subtitle="Pay as you go"
-              price={formatPrice(monthly)}
-              cadence="/month"
-              loading={purchasing === PRODUCT_IDS.monthly}
-              onPress={() => handleSubscribe(PRODUCT_IDS.monthly)}
-              disabled={!!purchasing}
-            />
-          )}
-          {!yearly && !monthly && (
-            <Text style={styles.error}>
-              Subscription products unavailable. Try again later.
-            </Text>
-          )}
+        <View style={styles.brandWrap}>
+          <BrandLogo size="md" />
         </View>
-      )}
 
-      <Text style={styles.legal}>
-        Payment will be charged to your {Platform.OS === "ios" ? "Apple ID" : "Google Play"} account
-        at confirmation. Subscriptions auto-renew unless canceled at least 24 hours before the end
-        of the current period. Manage or cancel anytime in your{" "}
-        {Platform.OS === "ios" ? "App Store account settings" : "Play Store subscriptions"}.
-      </Text>
-      <Text style={styles.legalLinks}>
-        Terms: https://unhingetv.com/terms · Privacy: https://unhingetv.com/privacy
-      </Text>
-    </ScrollView>
+        <View style={styles.crownCircle}>
+          <Crown size={40} color={Colors.gold} fill={Colors.gold} />
+        </View>
+
+        <Text style={styles.eyebrow}>· UNLOCK THE NETWORK ·</Text>
+        <Text style={styles.title}>GO UNHINGED</Text>
+        <Text style={styles.subtitle}>Every show. Every season. No limits.</Text>
+
+        <View style={styles.perks}>
+          {PERKS.map((perk) => (
+            <View key={perk} style={styles.perkRow}>
+              <View style={styles.perkCheck}>
+                <Check size={12} color={Colors.white} strokeWidth={3} />
+              </View>
+              <Text style={styles.perkText}>{perk}</Text>
+            </View>
+          ))}
+        </View>
+
+        {loading ? (
+          <View style={{ alignItems: "center", marginTop: Spacing.xl }}>
+            <ActivityIndicator color={Colors.red} size="large" />
+          </View>
+        ) : error ? (
+          <Text style={styles.error}>{error}</Text>
+        ) : (
+          <View style={styles.plans}>
+            {yearly && (
+              <PlanCard
+                title="YEARLY"
+                subtitle="Best value — save 15%"
+                price={formatPrice(yearly)}
+                cadence="/year"
+                featured
+                badge="SAVE 15%"
+                loading={purchasing === PRODUCT_IDS.yearly}
+                disabled={!!purchasing}
+                onPress={() => handleSubscribe(PRODUCT_IDS.yearly)}
+              />
+            )}
+            {monthly && (
+              <PlanCard
+                title="MONTHLY"
+                subtitle="Pay as you go"
+                price={formatPrice(monthly)}
+                cadence="/month"
+                loading={purchasing === PRODUCT_IDS.monthly}
+                disabled={!!purchasing}
+                onPress={() => handleSubscribe(PRODUCT_IDS.monthly)}
+              />
+            )}
+            {!yearly && !monthly && (
+              <Text style={styles.error}>
+                Subscription products unavailable. Try again later.
+              </Text>
+            )}
+          </View>
+        )}
+
+        <Text style={styles.legal}>
+          Payment will be charged to your{" "}
+          {Platform.OS === "ios" ? "Apple ID" : "Google Play"} account at confirmation.
+          Subscriptions auto-renew unless canceled at least 24 hours before the end of the
+          current period. Manage or cancel anytime in your{" "}
+          {Platform.OS === "ios" ? "App Store account settings" : "Play Store subscriptions"}.
+        </Text>
+        <Text style={styles.legalLinks}>
+          unhingetv.com/terms  ·  unhingetv.com/privacy
+        </Text>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -151,6 +184,7 @@ function PlanCard({
   price,
   cadence,
   featured,
+  badge,
   loading,
   disabled,
   onPress,
@@ -160,75 +194,153 @@ function PlanCard({
   price: string;
   cadence: string;
   featured?: boolean;
+  badge?: string;
   loading?: boolean;
   disabled?: boolean;
   onPress: () => void;
 }) {
   return (
-    <TouchableOpacity
-      style={[styles.plan, featured && styles.planFeatured, disabled && styles.planDisabled]}
-      activeOpacity={0.85}
-      onPress={onPress}
-      disabled={disabled}
-    >
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.planTitle, featured && styles.planTitleFeatured]}>{title}</Text>
-        <Text style={styles.planSubtitle}>{subtitle}</Text>
-      </View>
-      <View style={styles.planPriceWrap}>
-        {loading ? (
-          <ActivityIndicator size="small" color={Colors.white} />
-        ) : (
-          <>
-            <Text style={styles.planPrice}>{price}</Text>
-            <Text style={styles.planCadence}>{cadence}</Text>
-          </>
-        )}
-      </View>
+    <TouchableOpacity activeOpacity={0.9} onPress={onPress} disabled={disabled}>
+      <GlassCard redTint={featured} glow={featured} radius={Radius.lg}>
+        <View style={[styles.plan, featured && styles.planFeatured]}>
+          {badge && (
+            <View style={styles.planBadge}>
+              <Sparkles size={10} color={Colors.gold} fill={Colors.gold} />
+              <Text style={styles.planBadgeText}>{badge}</Text>
+            </View>
+          )}
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.planTitle, featured && styles.planTitleFeatured]}>{title}</Text>
+            <Text style={styles.planSubtitle}>{subtitle}</Text>
+          </View>
+          <View style={styles.planPriceWrap}>
+            {loading ? (
+              <ActivityIndicator size="small" color={Colors.white} />
+            ) : (
+              <>
+                <Text style={styles.planPrice}>{price}</Text>
+                <Text style={styles.planCadence}>{cadence}</Text>
+              </>
+            )}
+          </View>
+        </View>
+      </GlassCard>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.black },
-  scroll: { paddingHorizontal: Spacing.lg, paddingTop: 60, paddingBottom: 40 },
-  closeBtn: { position: "absolute", top: 50, right: Spacing.lg, zIndex: 2, padding: 6 },
-  crownWrap: { alignSelf: "center", marginBottom: Spacing.md },
+  glowBlob: {
+    position: "absolute",
+    top: -SCREEN_H * 0.1,
+    right: -120,
+    width: 380,
+    height: 380,
+    borderRadius: 190,
+    backgroundColor: Colors.red,
+    opacity: 0.2,
+  },
+  scroll: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: 64,
+    paddingBottom: 48,
+  },
+  closeBtn: { position: "absolute", top: 56, right: Spacing.lg, zIndex: 2, padding: 6 },
+  brandWrap: { alignSelf: "center", marginBottom: Spacing.lg },
+  crownCircle: {
+    alignSelf: "center",
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "rgba(255,215,0,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(255,215,0,0.4)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.md,
+  },
+  eyebrow: {
+    fontFamily: Fonts.barlow,
+    color: Colors.red,
+    fontSize: 11,
+    letterSpacing: 3,
+    textAlign: "center",
+    fontWeight: "700",
+    marginBottom: 6,
+  },
   title: {
-    fontSize: FontSizes.xxl,
-    fontWeight: "900",
+    fontFamily: Fonts.bebas,
+    fontSize: 48,
     color: Colors.white,
     textAlign: "center",
-    letterSpacing: 0.5,
+    letterSpacing: 2.5,
+    includeFontPadding: false,
   },
   subtitle: {
     fontSize: FontSizes.sm,
-    color: Colors.textMuted,
+    color: Colors.textSub,
     textAlign: "center",
-    marginTop: 6,
+    marginTop: 4,
     marginBottom: Spacing.xl,
   },
-  perks: { gap: 10, marginBottom: Spacing.xl },
-  perkRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  perkText: { color: Colors.white, fontSize: FontSizes.sm, flex: 1 },
+  perks: { gap: 12, marginBottom: Spacing.xl, alignSelf: "center" },
+  perkRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  perkCheck: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: Colors.red,
+    alignItems: "center",
+    justifyContent: "center",
+    ...Glow.redSm,
+  },
+  perkText: { color: Colors.white, fontSize: FontSizes.md, flex: 1, lineHeight: 22 },
   plans: { gap: Spacing.sm, marginTop: Spacing.sm },
   plan: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    borderRadius: Radius.lg,
     padding: Spacing.md,
+    minHeight: 86,
   },
-  planFeatured: { borderColor: Colors.red, backgroundColor: "#1a0000" },
-  planDisabled: { opacity: 0.5 },
-  planTitle: { fontSize: FontSizes.lg, fontWeight: "800", color: Colors.white },
-  planTitleFeatured: { color: Colors.red },
-  planSubtitle: { fontSize: FontSizes.xs, color: Colors.textMuted, marginTop: 2 },
-  planPriceWrap: { alignItems: "flex-end", minWidth: 80 },
-  planPrice: { fontSize: FontSizes.xl, fontWeight: "900", color: Colors.white },
-  planCadence: { fontSize: FontSizes.xs, color: Colors.textMuted },
+  planFeatured: {},
+  planBadge: {
+    position: "absolute",
+    top: -12,
+    right: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: Colors.gold,
+    borderRadius: Radius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  planBadgeText: {
+    fontFamily: Fonts.barlow,
+    fontSize: 10,
+    fontWeight: "700",
+    color: Colors.black,
+    letterSpacing: 1.2,
+  },
+  planTitle: {
+    fontFamily: Fonts.bebas,
+    fontSize: 24,
+    color: Colors.white,
+    letterSpacing: 1.5,
+    includeFontPadding: false,
+  },
+  planTitleFeatured: { color: Colors.redAccent },
+  planSubtitle: { fontSize: FontSizes.xs, color: Colors.textSub, marginTop: 2 },
+  planPriceWrap: { alignItems: "flex-end", minWidth: 88 },
+  planPrice: {
+    fontFamily: Fonts.bebas,
+    fontSize: 26,
+    color: Colors.white,
+    letterSpacing: 0.5,
+    includeFontPadding: false,
+  },
+  planCadence: { fontSize: FontSizes.xs, color: Colors.textSub, marginTop: 2 },
   legal: {
     fontSize: 10,
     color: Colors.textMuted,
@@ -241,6 +353,7 @@ const styles = StyleSheet.create({
     color: Colors.textFaint,
     textAlign: "center",
     marginTop: 6,
+    letterSpacing: 0.5,
   },
   error: {
     color: Colors.red,

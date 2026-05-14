@@ -1,6 +1,8 @@
 import React, { Component, ReactNode } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
-import { Colors, FontSizes, Spacing } from "../constants/theme";
+import { View, Text, StyleSheet, Platform } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { AlertTriangle } from "lucide-react-native";
+import { Colors, Fonts, FontSizes, Spacing, Glow, Radius } from "../constants/theme";
 
 interface Props {
   children: ReactNode;
@@ -27,16 +29,25 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.error) {
       return (
         <View style={styles.container}>
-          <Text style={styles.title}>Something went wrong</Text>
+          <LinearGradient
+            colors={["#1a0000", "#000000", "#000000"] as readonly [string, string, string]}
+            locations={[0, 0.5, 1]}
+            style={StyleSheet.absoluteFillObject}
+          />
+          <View style={styles.iconCircle}>
+            <AlertTriangle size={32} color={Colors.white} strokeWidth={2.5} />
+          </View>
+          <Text style={styles.eyebrow}>· SYSTEM FAULT ·</Text>
+          <Text style={styles.title}>SOMETHING WENT WRONG</Text>
           <Text style={styles.message}>
             We hit an unexpected error. The team has been notified.
           </Text>
-          <Text style={styles.detail}>
+          <Text style={styles.detail} numberOfLines={4}>
             {this.state.error.message?.slice(0, 200)}
           </Text>
-          <TouchableOpacity style={styles.button} onPress={this.reset}>
-            <Text style={styles.buttonText}>Try again</Text>
-          </TouchableOpacity>
+          <Text style={styles.button} onPress={this.reset}>
+            TRY AGAIN
+          </Text>
         </View>
       );
     }
@@ -52,17 +63,39 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: Spacing.lg,
   },
+  iconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: Colors.red,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.md,
+    ...Glow.redMd,
+  },
+  eyebrow: {
+    fontFamily: Fonts.barlow,
+    color: Colors.red,
+    fontSize: 11,
+    letterSpacing: 3,
+    fontWeight: "700",
+    marginBottom: 6,
+  },
   title: {
+    fontFamily: Fonts.bebas,
     color: Colors.white,
-    fontSize: FontSizes.xl,
-    fontWeight: "800",
+    fontSize: 32,
+    letterSpacing: 1.5,
+    textAlign: "center",
     marginBottom: Spacing.sm,
+    includeFontPadding: false,
   },
   message: {
-    color: Colors.textFaint,
+    color: Colors.textSub,
     fontSize: FontSizes.md,
     textAlign: "center",
     marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.md,
   },
   detail: {
     color: Colors.textFaint,
@@ -70,17 +103,19 @@ const styles = StyleSheet.create({
     fontFamily: Platform.select({ ios: "Menlo", android: "monospace" }),
     textAlign: "center",
     marginBottom: Spacing.lg,
-    opacity: 0.6,
+    opacity: 0.65,
+    paddingHorizontal: Spacing.md,
   },
   button: {
-    backgroundColor: Colors.brandRed,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: 8,
-  },
-  buttonText: {
+    fontFamily: Fonts.barlow,
     color: Colors.white,
+    backgroundColor: Colors.red,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.md,
     fontWeight: "700",
     fontSize: FontSizes.md,
+    letterSpacing: 2,
+    overflow: "hidden",
   },
 });

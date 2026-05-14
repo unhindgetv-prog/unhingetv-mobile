@@ -7,20 +7,33 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   Alert,
   ScrollView,
+  Dimensions,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "../../hooks/useAuth";
-import { Colors, FontSizes, Radius, Spacing } from "../../constants/theme";
+import {
+  Colors,
+  Fonts,
+  FontSizes,
+  Radius,
+  Spacing,
+  Glow,
+} from "../../constants/theme";
+import { BrandLogo, PrimaryButton } from "../../components/ui";
+
+const { height: SCREEN_H } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const { login } = useAuth();
-  const [email, setEmail]       = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading]   = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [pwFocused, setPwFocused] = useState(false);
 
   async function handleLogin() {
     if (!email.trim() || !password) {
@@ -31,40 +44,46 @@ export default function LoginScreen() {
     try {
       await login(email.trim().toLowerCase(), password);
       router.replace("/(tabs)");
-    } catch (err: any) {
-      Alert.alert("Login failed", err.message ?? "Invalid credentials.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Invalid credentials.";
+      Alert.alert("Login failed", msg);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
+    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <StatusBar style="light" />
+
+      {/* Cinematic backdrop: dark vignette + red glow blob */}
+      <LinearGradient
+        colors={["#1a0000", "#000000", "#000000"] as readonly [string, string, string]}
+        locations={[0, 0.4, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+      <View style={styles.redGlowBlob} pointerEvents="none" />
+
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {/* Logo wordmark */}
         <View style={styles.logoWrap}>
-          <Text style={styles.logoText}>UNHINGE</Text>
-          <View style={styles.logoBadge}>
-            <Text style={styles.logoTv}>TV</Text>
-          </View>
+          <BrandLogo size="lg" />
         </View>
 
-        <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
+        <Text style={styles.eyebrow}>· MEMBERS ENTRANCE ·</Text>
+        <Text style={styles.title}>WELCOME BACK</Text>
+        <Text style={styles.subtitle}>Sign in to keep watching.</Text>
 
-        {/* Form */}
         <View style={styles.form}>
           <View style={styles.fieldWrap}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>EMAIL</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, emailFocused && styles.inputFocused]}
               value={email}
               onChangeText={setEmail}
               placeholder="you@example.com"
@@ -73,13 +92,15 @@ export default function LoginScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="next"
+              onFocus={() => setEmailFocused(true)}
+              onBlur={() => setEmailFocused(false)}
             />
           </View>
 
           <View style={styles.fieldWrap}>
-            <Text style={styles.label}>Password</Text>
+            <Text style={styles.label}>PASSWORD</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, pwFocused && styles.inputFocused]}
               value={password}
               onChangeText={setPassword}
               placeholder="••••••••"
@@ -87,6 +108,8 @@ export default function LoginScreen() {
               secureTextEntry
               returnKeyType="done"
               onSubmitEditing={handleLogin}
+              onFocus={() => setPwFocused(true)}
+              onBlur={() => setPwFocused(false)}
             />
           </View>
 
@@ -96,30 +119,24 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </Link>
 
-          <TouchableOpacity
-            style={[styles.btn, loading && styles.btnDisabled]}
+          <PrimaryButton
+            label="Sign In"
             onPress={handleLogin}
-            disabled={loading}
-            activeOpacity={0.85}
-          >
-            {loading
-              ? <ActivityIndicator color={Colors.white} size="small" />
-              : <Text style={styles.btnText}>Sign In</Text>
-            }
-          </TouchableOpacity>
+            loading={loading}
+            size="lg"
+            fullWidth
+            style={{ marginTop: Spacing.sm }}
+          />
         </View>
 
-        {/* Divider */}
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>New to UnhingeTV?</Text>
+          <Text style={styles.dividerText}>NEW TO UNHINGETV</Text>
           <View style={styles.dividerLine} />
         </View>
 
         <Link href="/(auth)/signup" asChild>
-          <TouchableOpacity style={styles.outlineBtn} activeOpacity={0.8}>
-            <Text style={styles.outlineBtnText}>Create Account</Text>
-          </TouchableOpacity>
+          <PrimaryButton label="Create Account" variant="outline" size="lg" fullWidth />
         </Link>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -127,9 +144,16 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: Colors.black,
+  root: { flex: 1, backgroundColor: Colors.black },
+  redGlowBlob: {
+    position: "absolute",
+    top: -SCREEN_H * 0.15,
+    left: -120,
+    width: 380,
+    height: 380,
+    borderRadius: 190,
+    backgroundColor: Colors.red,
+    opacity: 0.18,
   },
   scroll: {
     flexGrow: 1,
@@ -137,58 +161,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.xxl,
   },
-  logoWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "center",
-    marginBottom: Spacing.xl,
-  },
-  logoText: {
-    fontSize: 34,
-    fontWeight: "900",
-    color: Colors.white,
-    letterSpacing: 4,
-  },
-  logoBadge: {
-    backgroundColor: Colors.red,
-    borderRadius: Radius.sm,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginLeft: 6,
-  },
-  logoTv: {
-    fontSize: 22,
-    fontWeight: "900",
-    color: Colors.white,
-    letterSpacing: 1,
+  logoWrap: { alignItems: "center", marginBottom: Spacing.lg },
+  eyebrow: {
+    fontFamily: Fonts.barlow,
+    color: Colors.red,
+    fontSize: 11,
+    letterSpacing: 3,
+    textAlign: "center",
+    fontWeight: "700",
+    marginBottom: 6,
+    includeFontPadding: false,
   },
   title: {
-    fontSize: FontSizes.xxl,
-    fontWeight: "800",
+    fontFamily: Fonts.bebas,
+    fontSize: 42,
     color: Colors.white,
     textAlign: "center",
-    marginBottom: 6,
+    letterSpacing: 2,
+    includeFontPadding: false,
   },
   subtitle: {
     fontSize: FontSizes.sm,
-    color: Colors.textMuted,
+    color: Colors.textSub,
     textAlign: "center",
+    marginTop: 4,
     marginBottom: Spacing.xl,
   },
-  form: {
-    gap: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  fieldWrap: {
-    gap: 6,
-  },
+  form: { gap: Spacing.md, marginBottom: Spacing.lg },
+  fieldWrap: { gap: 7 },
   label: {
-    fontSize: FontSizes.sm,
-    fontWeight: "600",
+    fontFamily: Fonts.barlow,
+    fontSize: 11,
+    fontWeight: "700",
     color: Colors.textSub,
+    letterSpacing: 2,
+    includeFontPadding: false,
   },
   input: {
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.dark,
     borderWidth: 1,
     borderColor: Colors.cardBorder,
     borderRadius: Radius.md,
@@ -197,60 +207,30 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.md,
     color: Colors.white,
   },
-  forgotWrap: {
-    alignSelf: "flex-end",
+  inputFocused: {
+    borderColor: Colors.redBorder,
+    ...Glow.redSm,
   },
+  forgotWrap: { alignSelf: "flex-end" },
   forgotText: {
-    fontSize: FontSizes.xs,
+    fontFamily: Fonts.barlow,
+    fontSize: 12,
     color: Colors.red,
-    fontWeight: "600",
-  },
-  btn: {
-    backgroundColor: Colors.red,
-    borderRadius: Radius.md,
-    paddingVertical: 15,
-    alignItems: "center",
-    marginTop: Spacing.xs,
-    shadowColor: Colors.red,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  btnDisabled: {
-    opacity: 0.6,
-  },
-  btnText: {
-    fontSize: FontSizes.md,
-    fontWeight: "800",
-    color: Colors.white,
-    letterSpacing: 0.5,
+    fontWeight: "700",
+    letterSpacing: 0.8,
   },
   dividerRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.sm,
-    marginVertical: Spacing.md,
+    marginVertical: Spacing.lg,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: Colors.cardBorder,
-  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: Colors.cardBorder },
   dividerText: {
-    fontSize: FontSizes.xs,
+    fontFamily: Fonts.barlow,
+    fontSize: 10,
     color: Colors.textMuted,
-  },
-  outlineBtn: {
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    borderRadius: Radius.md,
-    paddingVertical: 15,
-    alignItems: "center",
-  },
-  outlineBtnText: {
-    fontSize: FontSizes.md,
+    letterSpacing: 2,
     fontWeight: "700",
-    color: Colors.white,
   },
 });

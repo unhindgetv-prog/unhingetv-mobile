@@ -1,9 +1,27 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useFonts, BebasNeue_400Regular } from "@expo-google-fonts/bebas-neue";
+import {
+  BarlowCondensed_600SemiBold,
+  BarlowCondensed_700Bold,
+} from "@expo-google-fonts/barlow-condensed";
+import { View } from "react-native";
 import { AuthProvider } from "../hooks/useAuth";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 
 export default function RootLayout() {
+  // Brand display fonts. Until they load, fall back to a hidden black screen
+  // (instead of system Helvetica flashing in) so first paint matches brand.
+  const [fontsLoaded] = useFonts({
+    BebasNeue_400Regular,
+    BarlowCondensed_600SemiBold,
+    BarlowCondensed_700Bold,
+  });
+
+  if (!fontsLoaded) {
+    return <View style={{ flex: 1, backgroundColor: "#000000" }} />;
+  }
+
   return (
     <ErrorBoundary>
       <AuthProvider>

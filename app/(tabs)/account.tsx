@@ -20,7 +20,8 @@ import {
 } from "lucide-react-native";
 import { useAuth } from "../../hooks/useAuth";
 import { getSubscription } from "../../lib/api";
-import { Colors, FontSizes, Radius, Spacing } from "../../constants/theme";
+import { Colors, Fonts, FontSizes, Radius, Spacing, Glow } from "../../constants/theme";
+import { BrandLogo, PrimaryButton } from "../../components/ui";
 
 interface SubInfo {
   status: string;
@@ -84,22 +85,25 @@ export default function AccountScreen() {
   if (!authLoading && !user) {
     return (
       <View style={styles.root}>
-        <View style={styles.header}>
-          <Text style={styles.pageTitle}>Account</Text>
+        <View style={styles.headerBar}>
+          <BrandLogo size="md" />
+          <Text style={styles.pageTitle}>ACCOUNT</Text>
         </View>
         <View style={styles.guestWrap}>
           <View style={styles.guestIcon}>
             <User size={40} color={Colors.textFaint} />
           </View>
-          <Text style={styles.guestTitle}>Sign in to UnhingeTV</Text>
-          <Text style={styles.guestSub}>Access your watchlist, track progress, and manage your subscription.</Text>
-          <TouchableOpacity
-            style={styles.signInBtn}
+          <Text style={styles.guestEyebrow}>· MEMBERS AREA ·</Text>
+          <Text style={styles.guestTitle}>SIGN IN</Text>
+          <Text style={styles.guestSub}>
+            Access your watchlist, track progress, and manage your subscription.
+          </Text>
+          <PrimaryButton
+            label="Sign In"
             onPress={() => router.push("/(auth)/login")}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.signInBtnText}>Sign In</Text>
-          </TouchableOpacity>
+            size="lg"
+            style={{ marginTop: Spacing.md }}
+          />
           <TouchableOpacity
             style={styles.signUpLink}
             onPress={() => router.push("/(auth)/signup")}
@@ -117,8 +121,9 @@ export default function AccountScreen() {
 
   return (
     <ScrollView style={styles.root} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <Text style={styles.pageTitle}>Account</Text>
+      <View style={styles.headerBar}>
+        <BrandLogo size="md" />
+        <Text style={styles.pageTitle}>ACCOUNT</Text>
       </View>
 
       {/* Profile card */}
@@ -214,11 +219,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.sm,
   },
+  headerBar: {
+    paddingTop: 56,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.cardBorder,
+    marginBottom: Spacing.md,
+  },
   pageTitle: {
-    fontSize: FontSizes.xxl,
-    fontWeight: "900",
+    fontFamily: Fonts.bebas,
+    fontSize: 26,
     color: Colors.white,
-    letterSpacing: 0.5,
+    letterSpacing: 2,
+    includeFontPadding: false,
+  },
+  guestEyebrow: {
+    fontFamily: Fonts.barlow,
+    color: Colors.red,
+    fontSize: 11,
+    letterSpacing: 3,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 6,
   },
   // Guest
   guestWrap: {
@@ -237,11 +263,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   guestTitle: {
-    fontSize: FontSizes.xl,
-    fontWeight: "800",
+    fontFamily: Fonts.bebas,
+    fontSize: 38,
     color: Colors.white,
     textAlign: "center",
+    letterSpacing: 2,
     marginBottom: 8,
+    includeFontPadding: false,
   },
   guestSub: {
     fontSize: FontSizes.sm,
