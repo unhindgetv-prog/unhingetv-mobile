@@ -31,8 +31,12 @@ import {
 import * as SecureStore from "expo-secure-store";
 import Constants from "expo-constants";
 
+// See lib/api.ts for the canonical resolution order — EAS Secret → app.json extra
+// → apex fallback. Kept in sync via SHARED_PRODUCT_IDS.md (relevant constants table).
 const BASE_URL =
-  (Constants.expoConfig?.extra?.apiUrl as string) ?? "https://unhingetv.vercel.app";
+  (process.env.EXPO_PUBLIC_API_URL as string | undefined) ??
+  (Constants.expoConfig?.extra?.apiUrl as string | undefined) ??
+  "https://unhingetv.com";
 
 export const PRODUCT_IDS = {
   monthly: "com.unhingetv.monthly",

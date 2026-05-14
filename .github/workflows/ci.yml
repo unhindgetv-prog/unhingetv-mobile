@@ -1,0 +1,30 @@
+name: Mobile CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  check:
+    name: typecheck + expo-doctor + install-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Install
+        run: npm ci --no-audit --prefer-offline
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Expo Doctor
+        # 17 health checks for SDK / dep / config alignment.
+        run: npx expo-doctor
+      - name: Expo dependency alignment
+        # Verifies every Expo-managed package is at the version expected by the
+        # installed SDK. Catches version drift on PRs before merge.
+        run: npx expo install --check

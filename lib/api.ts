@@ -1,8 +1,17 @@
 import * as SecureStore from "expo-secure-store";
 import Constants from "expo-constants";
 
+// Resolution order:
+//   1. process.env.EXPO_PUBLIC_API_URL — injected by EAS at update/build time when
+//      the EAS Secret EXPO_PUBLIC_API_URL is set. Preferred source so the URL doesn't
+//      ship verbatim inside app.json (rotating it would otherwise need a new build).
+//   2. Constants.expoConfig.extra.apiUrl — legacy fallback that ships inside the
+//      bundle (currently "https://unhingetv.vercel.app" in app.json).
+//   3. Hardcoded apex — last-resort default so the app never points at localhost.
 const BASE_URL =
-  (Constants.expoConfig?.extra?.apiUrl as string) ?? "https://unhingetv.vercel.app";
+  (process.env.EXPO_PUBLIC_API_URL as string | undefined) ??
+  (Constants.expoConfig?.extra?.apiUrl as string | undefined) ??
+  "https://unhingetv.com";
 
 // ─── Token storage ────────────────────────────────────────────────────────────
 
@@ -128,8 +137,14 @@ export async function getShows(): Promise<Show[]> {
   return apiFetch<Show[]>("/api/shows");
 }
 
+export async function getComingSoonShows(): Promise<Show[]> {
+  return apiFetch<Show[]>("/api/shows/coming-soon");
+}
+
 export async function getShow(slug: string): Promise<{ show: Show; seasons: Season[] }> {
-  return apiFetch<{ show: Show; seasons: Season[] }>(`/api/shows/${slug}`);
+  const data = await apiFetch<Show & { seasons: Season[] }>(`/api/shows/${slug}`);
+  const { seasons, ...show } = data;
+  return { show: show as Show, seasons: seasons ?? [] };
 }
 
 // ─── Episodes ─────────────────────────────────────────────────────────────────

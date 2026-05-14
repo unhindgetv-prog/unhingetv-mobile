@@ -8,8 +8,9 @@ import {
 import { View } from "react-native";
 import { AuthProvider } from "../hooks/useAuth";
 import { ErrorBoundary } from "../components/ErrorBoundary";
+import { Sentry } from "../lib/sentry";
 
-export default function RootLayout() {
+function RootLayoutImpl() {
   // Brand display fonts. Until they load, fall back to a hidden black screen
   // (instead of system Helvetica flashing in) so first paint matches brand.
   const [fontsLoaded] = useFonts({
@@ -45,3 +46,7 @@ export default function RootLayout() {
     </ErrorBoundary>
   );
 }
+
+// Sentry.wrap is a no-op in Expo Go (DSN absent + native module missing) and
+// becomes an instrumented wrapper inside the production binary.
+export default Sentry.wrap(RootLayoutImpl);

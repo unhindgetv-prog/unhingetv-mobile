@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { AlertTriangle } from "lucide-react-native";
 import { Colors, Fonts, FontSizes, Spacing, Glow, Radius } from "../constants/theme";
+import { Sentry } from "../lib/sentry";
 
 interface Props {
   children: ReactNode;
@@ -19,7 +20,9 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: { componentStack?: string | null }) {
-    // TODO: forward to Sentry once SDK is added on mobile
+    // Sentry is a no-op shim when the native module isn't bound (Expo Go) or
+    // EXPO_PUBLIC_SENTRY_DSN isn't set, so this is safe to call unconditionally.
+    Sentry.captureException(error);
     console.error("[ErrorBoundary]", error, info.componentStack);
   }
 

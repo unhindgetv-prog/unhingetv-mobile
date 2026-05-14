@@ -14,6 +14,7 @@ import {
   storeToken,
   type AuthUser,
 } from "../lib/api";
+import { Sentry } from "../lib/sentry";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser]     = useState<AuthUser | null>(null);
   const [token, setToken]   = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Mirror the current user into Sentry so crashes are attributed. No-op in
+  // Expo Go where the native module isn't bound.
+  useEffect(() => {
+    Sentry.setUser(user ? { id: user.id, email: user.email ?? undefined } : null);
+  }, [user]);
 
   // Restore session on mount
   useEffect(() => {
