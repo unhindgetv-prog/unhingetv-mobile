@@ -80,11 +80,26 @@ export function formatPrice(sub: Subscription): string {
 
 export type ValidateResponse = {
   ok: boolean;
-  provider: "apple" | "google";
+  provider: "apple" | "google" | "amazon";
   plan: "MONTHLY" | "YEARLY";
   status: string;
   currentPeriodEnd: string | null;
 };
+
+/**
+ * Detect if this purchase came from the Amazon Appstore (Fire TV / Amazon-sideloaded
+ * Android build) rather than Google Play. Amazon purchases carry a `userIdAmazon`
+ * field; Google Play purchases carry `purchaseToken`. We discriminate on shape rather
+ * than install source because the latter requires an extra native call and the shape
+ * check is authoritative for what we're about to validate.
+ */
+function isAmazonPurchase(p: SubscriptionPurchase): p is SubscriptionPurchase & {
+  userIdAmazon: string;
+  receiptId: string;
+} {
+  const x = p as { userIdAmazon?: string; receiptId?: string };
+  return typeof x.userIdAmazon === "string" && typeof x.receiptId === "string";
+}
 
 async function postValidate(body: object, sessionToken: string): Promise<ValidateResponse> {
   const res = await fetch(`${BASE_URL}/api/iap/validate`, {
@@ -139,16 +154,22 @@ export async function purchaseSubscription(sku: string): Promise<ValidateRespons
     });
   });
 
-  // Android v5 needs subscriptionOffers; fetch them inline.
+  // Google Play (Android v5+) needs subscriptionOffers; Amazon Appstore does not.
+  // Amazon subscription objects don't carry `subscriptionOfferDetails`, so absence
+  // of that field is our signal that we're on Amazon and can request the plain SKU.
   if (Platform.OS === "android") {
     const subs = await getSubscriptions({ skus: [sku] });
     const a = subs[0] as SubscriptionAndroid | undefined;
     const offerToken = a?.subscriptionOfferDetails?.[0]?.offerToken;
-    if (!offerToken) throw new Error("No subscription offer available");
-    await requestSubscription({
-      sku,
-      subscriptionOffers: [{ sku, offerToken }],
-    });
+    if (offerToken) {
+      await requestSubscription({
+        sku,
+        subscriptionOffers: [{ sku, offerToken }],
+      });
+    } else {
+      // Amazon Appstore path — no offer token, just request the SKU.
+      await requestSubscription({ sku });
+    }
   } else {
     await requestSubscription({ sku });
   }
@@ -166,6 +187,17 @@ async function validateAndFinish(
     // StoreKit 2 path: purchase.transactionId is the signed JWS transaction id.
     response = await postValidate(
       { platform: "apple", transactionId: purchase.transactionId },
+      sessionToken
+    );
+  } else if (isAmazonPurchase(purchase)) {
+    // Fire TV / Amazon Appstore install — receipt validates via Amazon RVS.
+    response = await postValidate(
+      {
+        platform: "amazon",
+        receiptId: purchase.receiptId,
+        amazonUserId: purchase.userIdAmazon,
+        productId: purchase.productId,
+      },
       sessionToken
     );
   } else {

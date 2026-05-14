@@ -21,6 +21,9 @@
     },
     "apple-tv": {
       "autoIncrement": true,
+      "env": {
+        "EXPO_TV": "1"
+      },
       "ios": {
         "buildConfiguration": "Release",
         "scheme": "UnhingeTV-tvOS"
@@ -34,7 +37,12 @@
       }
     },
     "fire-tv": {
+      "extends": "production",
       "distribution": "internal",
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_STORE": "amazon"
+      },
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease"
