@@ -21,7 +21,7 @@ import {
   ChevronUp,
 } from "lucide-react-native";
 import { getShow, type Show, type Season, type Episode } from "../../lib/api";
-import { Colors, FontSizes, Radius, Spacing } from "../../constants/theme";
+import { Colors, Fonts, FontSizes, Radius, Spacing } from "../../constants/theme";
 import { useAuth } from "../../hooks/useAuth";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -157,14 +157,19 @@ export default function ShowDetailScreen() {
             <View style={[StyleSheet.absoluteFillObject, { backgroundColor: Colors.muted }]} />
           )}
           <LinearGradient
-            colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.6)", "#000000"]}
-            locations={[0, 0.6, 1]}
+            colors={["rgba(0,0,0,0.3)", "transparent", "rgba(0,0,0,0.4)", "#000000"]}
+            locations={[0, 0.25, 0.65, 1]}
             style={StyleSheet.absoluteFillObject}
           />
+          <View style={styles.bannerGlow} />
         </View>
 
         {/* Meta */}
         <View style={styles.meta}>
+          <View style={styles.eyebrowRow}>
+            <View style={styles.eyebrowDot} />
+            <Text style={styles.eyebrow}>ORIGINAL SERIES</Text>
+          </View>
           <View style={styles.genreRow}>
             {show.genre.slice(0, 3).map((g) => (
               <View key={g} style={styles.genrePill}>
@@ -221,6 +226,13 @@ export default function ShowDetailScreen() {
         </View>
 
         {/* Seasons & Episodes */}
+        <View style={styles.seasonsHeader}>
+          <Text style={styles.seasonsEyebrow}>WATCH</Text>
+          <View style={styles.seasonsTitleRow}>
+            <Text style={styles.seasonsTitle}>Episodes</Text>
+            <View style={styles.seasonsUnderline} />
+          </View>
+        </View>
         <View style={styles.seasons}>
           {seasons.map((season) => {
             const open = expanded.has(season.id);
@@ -291,10 +303,12 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 52,
     left: Spacing.md,
-    width: 38,
-    height: 38,
-    borderRadius: Radius.full,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -302,6 +316,48 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.lg,
+  },
+  bannerGlow: {
+    position: "absolute",
+    left: -60,
+    bottom: -60,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: Colors.red,
+    opacity: 0.2,
+  },
+  eyebrowRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 },
+  eyebrowDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.red },
+  eyebrow: {
+    fontFamily: Fonts.barlow,
+    fontSize: 11,
+    fontWeight: "700",
+    color: Colors.red,
+    letterSpacing: 2,
+    textTransform: "uppercase",
+  },
+  seasonsHeader: { paddingHorizontal: Spacing.md, paddingBottom: Spacing.md },
+  seasonsEyebrow: {
+    fontFamily: Fonts.barlow,
+    fontSize: 11,
+    fontWeight: "700",
+    color: Colors.red,
+    letterSpacing: 2,
+    marginBottom: 4,
+  },
+  seasonsTitleRow: { flexDirection: "row", alignItems: "flex-end", gap: 10 },
+  seasonsTitle: {
+    fontFamily: Fonts.bebas,
+    fontSize: 28,
+    color: Colors.white,
+    letterSpacing: 1.5,
+    includeFontPadding: false,
+    lineHeight: 28,
+  },
+  seasonsUnderline: {
+    width: 40, height: 3, backgroundColor: Colors.red, marginBottom: 7, borderRadius: 2,
+    shadowColor: Colors.red, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 6, elevation: 3,
   },
   genreRow: {
     flexDirection: "row",
@@ -323,11 +379,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   title: {
-    fontSize: 28,
-    fontWeight: "900",
+    fontFamily: Fonts.bebas,
+    fontSize: 42,
     color: Colors.white,
-    letterSpacing: 0.3,
+    letterSpacing: 1.5,
     marginBottom: 6,
+    includeFontPadding: false,
+    lineHeight: 42,
   },
   ratingRow: {
     flexDirection: "row",
@@ -360,15 +418,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 9,
     backgroundColor: Colors.red,
     borderRadius: Radius.md,
-    paddingVertical: 14,
+    paddingVertical: 16,
     shadowColor: Colors.red,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.75,
+    shadowRadius: 16,
+    elevation: 10,
   },
   playBtnLocked: {
     backgroundColor: Colors.muted,
@@ -378,9 +436,12 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   playBtnText: {
-    fontSize: FontSizes.md,
-    fontWeight: "800",
+    fontFamily: Fonts.barlow,
+    fontSize: 14,
+    fontWeight: "700",
     color: Colors.white,
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
   },
   seasons: {
     paddingHorizontal: Spacing.md,
@@ -401,9 +462,11 @@ const styles = StyleSheet.create({
   },
   seasonTitle: {
     flex: 1,
-    fontSize: FontSizes.md,
-    fontWeight: "800",
+    fontFamily: Fonts.bebas,
+    fontSize: 22,
     color: Colors.white,
+    letterSpacing: 1.2,
+    includeFontPadding: false,
   },
   seasonEpCount: {
     fontSize: FontSizes.xs,

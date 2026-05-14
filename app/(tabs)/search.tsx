@@ -14,7 +14,7 @@ import {
 import { router } from "expo-router";
 import { Search, X, Film, Play } from "lucide-react-native";
 import { search, type SearchResults } from "../../lib/api";
-import { Colors, FontSizes, Radius, Spacing } from "../../constants/theme";
+import { Colors, Fonts, FontSizes, Radius, Spacing } from "../../constants/theme";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
@@ -225,11 +225,13 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.black,
   },
   pageTitle: {
-    fontSize: FontSizes.xxl,
-    fontWeight: "900",
+    fontFamily: Fonts.bebas,
+    fontSize: 36,
     color: Colors.white,
-    letterSpacing: 0.5,
+    letterSpacing: 2,
     marginBottom: Spacing.sm,
+    includeFontPadding: false,
+    lineHeight: 36,
   },
   bar: {
     flexDirection: "row",
@@ -268,11 +270,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   emptyTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: "700",
+    fontFamily: Fonts.bebas,
+    fontSize: 26,
     color: Colors.white,
     marginBottom: 6,
     textAlign: "center",
+    letterSpacing: 1.2,
+    includeFontPadding: false,
   },
   emptySub: {
     fontSize: FontSizes.sm,
@@ -291,11 +295,12 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   sectionTitle: {
+    fontFamily: Fonts.barlow,
     fontSize: 11,
-    fontWeight: "800",
-    color: Colors.textSub,
+    fontWeight: "700",
+    color: Colors.red,
     textTransform: "uppercase",
-    letterSpacing: 1.5,
+    letterSpacing: 2,
   },
   sectionCount: {
     fontSize: 11,

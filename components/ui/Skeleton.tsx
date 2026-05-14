@@ -3,7 +3,8 @@ import { Animated, StyleSheet, View, ViewStyle, Easing } from "react-native";
 import { Colors, Radius } from "../../constants/theme";
 
 interface Props {
-  width?: number | "100%";
+  /** Number for px, percentage string ("100%"/"70%") for relative width. */
+  width?: number | `${number}%`;
   height?: number;
   radius?: number;
   style?: ViewStyle;
@@ -36,7 +37,8 @@ export function Skeleton({ width = "100%", height = 20, radius = Radius.sm, styl
     <View
       style={[
         styles.base,
-        { width: width as number, height, borderRadius: radius },
+        // RN's ViewStyle accepts number | `${number}%` for width.
+        { width, height, borderRadius: radius },
         style,
       ]}
     >
