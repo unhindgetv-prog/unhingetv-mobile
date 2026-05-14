@@ -1,13 +1,13 @@
 /**
- * react-native-iap wrapper for UnhingeTV.
+ * react-native-iap@15 wrapper for UnhingeTV.
  *
  * Flow:
- *   1. App startup: initConnection() once (lazy on first paywall mount is fine too).
- *   2. Paywall: getProducts() → present prices.
- *   3. User taps Subscribe: requestSubscription({ sku }) → native sheet.
+ *   1. App startup: initConnection() once (lazy on first paywall mount is fine).
+ *   2. Paywall: fetchProducts({type: 'subs'}) → present prices.
+ *   3. User taps Subscribe: requestPurchase({type: 'subs', request: {...}}) → native sheet.
  *   4. purchaseUpdatedListener fires on success → POST our server /api/iap/validate
  *      with the platform-specific receipt → server is authoritative source of truth.
- *   5. On success: finishTransaction(purchase, isConsumable=false) to remove from queue.
+ *   5. On success: finishTransaction({ purchase }) to remove from queue.
  *
  * IMPORTANT: never grant entitlement based on what RNIAP tells the client. Wait for
  * the server's response from /api/iap/validate.
@@ -16,16 +16,17 @@ import { Platform } from "react-native";
 import {
   initConnection,
   endConnection,
-  getSubscriptions,
-  requestSubscription,
+  fetchProducts,
+  requestPurchase,
   finishTransaction,
   purchaseUpdatedListener,
   purchaseErrorListener,
-  type Subscription,
-  type SubscriptionPurchase,
+  type ProductSubscription,
+  type ProductSubscriptionAndroid,
+  type ProductSubscriptionIOS,
+  type Purchase,
   type PurchaseError,
-  type SubscriptionAndroid,
-  type SubscriptionIOS,
+  type EventSubscription,
 } from "react-native-iap";
 import * as SecureStore from "expo-secure-store";
 import Constants from "expo-constants";
@@ -41,8 +42,8 @@ export const PRODUCT_IDS = {
 export const ALL_SKUS = [PRODUCT_IDS.monthly, PRODUCT_IDS.yearly];
 
 let connected = false;
-let updateSub: { remove: () => void } | null = null;
-let errorSub: { remove: () => void } | null = null;
+let updateSub: EventSubscription | null = null;
+let errorSub: EventSubscription | null = null;
 
 export async function connect(): Promise<void> {
   if (connected) return;
@@ -61,21 +62,27 @@ export async function disconnect(): Promise<void> {
   }
 }
 
-export async function fetchProducts(): Promise<Subscription[]> {
+export async function fetchSubscriptionProducts(): Promise<ProductSubscription[]> {
   await connect();
-  return getSubscriptions({ skus: ALL_SKUS });
+  const result = await fetchProducts({ skus: ALL_SKUS, type: "subs" });
+  // fetchProducts({type:'subs'}) returns ProductSubscription[] | null.
+  return (result ?? []).filter((p): p is ProductSubscription => p?.type === "subs");
 }
 
 /** Format a price for display, preferring the localized price string. */
-export function formatPrice(sub: Subscription): string {
-  if (Platform.OS === "ios") {
-    const ios = sub as SubscriptionIOS;
-    return ios.localizedPrice ?? `$${ios.price ?? "?"}`;
+export function formatPrice(sub: ProductSubscription): string {
+  if (sub.platform === "ios") {
+    const ios = sub as ProductSubscriptionIOS;
+    return ios.displayPrice ?? `$${ios.price ?? "?"}`;
   }
-  const a = sub as SubscriptionAndroid;
-  const offer = a.subscriptionOfferDetails?.[0];
-  const phase = offer?.pricingPhases?.pricingPhaseList?.[0];
-  return phase?.formattedPrice ?? "—";
+  const a = sub as ProductSubscriptionAndroid;
+  const offer = a.subscriptionOffers?.[0] ?? a.subscriptionOfferDetailsAndroid?.[0];
+  // SubscriptionOffer uses pricingPhases.list; the legacy Android offer uses pricingPhases.pricingPhaseList.
+  const offerAny = offer as
+    | { pricingPhases?: { pricingPhaseList?: Array<{ formattedPrice?: string }> } }
+    | undefined;
+  const phase = offerAny?.pricingPhases?.pricingPhaseList?.[0];
+  return phase?.formattedPrice ?? a.displayPrice ?? "—";
 }
 
 export type ValidateResponse = {
@@ -87,13 +94,11 @@ export type ValidateResponse = {
 };
 
 /**
- * Detect if this purchase came from the Amazon Appstore (Fire TV / Amazon-sideloaded
- * Android build) rather than Google Play. Amazon purchases carry a `userIdAmazon`
- * field; Google Play purchases carry `purchaseToken`. We discriminate on shape rather
- * than install source because the latter requires an extra native call and the shape
- * check is authoritative for what we're about to validate.
+ * Amazon Appstore purchases (Fire TV) carry `userIdAmazon` + `receiptId` at
+ * runtime, not in the typed Purchase union. Detect on shape since that's
+ * authoritative for what we're about to validate.
  */
-function isAmazonPurchase(p: SubscriptionPurchase): p is SubscriptionPurchase & {
+function isAmazonPurchase(p: Purchase): p is Purchase & {
   userIdAmazon: string;
   receiptId: string;
 } {
@@ -132,7 +137,7 @@ export async function purchaseSubscription(sku: string): Promise<ValidateRespons
 
   // Set up listeners BEFORE requesting purchase so we never miss the event.
   const result = new Promise<ValidateResponse>((resolve, reject) => {
-    updateSub = purchaseUpdatedListener(async (purchase: SubscriptionPurchase) => {
+    updateSub = purchaseUpdatedListener(async (purchase: Purchase) => {
       try {
         const validated = await validateAndFinish(purchase, sessionToken);
         resolve(validated);
@@ -155,38 +160,46 @@ export async function purchaseSubscription(sku: string): Promise<ValidateRespons
   });
 
   // Google Play (Android v5+) needs subscriptionOffers; Amazon Appstore does not.
-  // Amazon subscription objects don't carry `subscriptionOfferDetails`, so absence
+  // Amazon ProductSubscription objects don't carry subscription offers, so absence
   // of that field is our signal that we're on Amazon and can request the plain SKU.
   if (Platform.OS === "android") {
-    const subs = await getSubscriptions({ skus: [sku] });
-    const a = subs[0] as SubscriptionAndroid | undefined;
-    const offerToken = a?.subscriptionOfferDetails?.[0]?.offerToken;
-    if (offerToken) {
-      await requestSubscription({
-        sku,
-        subscriptionOffers: [{ sku, offerToken }],
-      });
-    } else {
-      // Amazon Appstore path — no offer token, just request the SKU.
-      await requestSubscription({ sku });
-    }
+    const subs = await fetchProducts({ skus: [sku], type: "subs" });
+    const a = (subs?.[0] as ProductSubscriptionAndroid | undefined);
+    const offerToken =
+      a?.subscriptionOffers?.[0]?.offerTokenAndroid ??
+      a?.subscriptionOfferDetailsAndroid?.[0]?.offerToken;
+    await requestPurchase({
+      type: "subs",
+      request: {
+        google: {
+          skus: [sku],
+          ...(offerToken
+            ? { subscriptionOffers: [{ sku, offerToken }] }
+            : {}),
+        },
+      },
+    });
   } else {
-    await requestSubscription({ sku });
+    await requestPurchase({
+      type: "subs",
+      request: { apple: { sku } },
+    });
   }
 
   return result;
 }
 
 async function validateAndFinish(
-  purchase: SubscriptionPurchase,
+  purchase: Purchase,
   sessionToken: string
 ): Promise<ValidateResponse> {
   let response: ValidateResponse;
 
   if (Platform.OS === "ios") {
     // StoreKit 2 path: purchase.transactionId is the signed JWS transaction id.
+    const transactionId = (purchase as { transactionId?: string }).transactionId;
     response = await postValidate(
-      { platform: "apple", transactionId: purchase.transactionId },
+      { platform: "apple", transactionId },
       sessionToken
     );
   } else if (isAmazonPurchase(purchase)) {
@@ -201,7 +214,7 @@ async function validateAndFinish(
       sessionToken
     );
   } else {
-    const purchaseToken = (purchase as { purchaseToken?: string }).purchaseToken;
+    const purchaseToken = (purchase as { purchaseToken?: string | null }).purchaseToken;
     if (!purchaseToken) throw new Error("Missing purchaseToken on Android purchase");
     response = await postValidate(
       {
@@ -218,3 +231,6 @@ async function validateAndFinish(
   await finishTransaction({ purchase, isConsumable: false });
   return response;
 }
+
+// Legacy aliases — kept for existing call-sites until they migrate.
+export { fetchSubscriptionProducts as fetchProducts };

@@ -24,6 +24,12 @@ export const Colors = {
   green:      "#22C55E",
   orange:     "#F97316",
   blue:       "#3B82F6",
+
+  // Semantic aliases (used by screens that prefer role-based names)
+  background: "#000000",
+  brandRed:   "#CC0000",
+  border:     "#1F1F1F",
+  surface:    "#111111",
 } as const;
 
 export const FontSizes = {

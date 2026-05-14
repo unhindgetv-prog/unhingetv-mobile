@@ -11,10 +11,10 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { Crown, Check, X } from "lucide-react-native";
-import type { Subscription } from "react-native-iap";
+import type { ProductSubscription } from "react-native-iap";
 import {
   PRODUCT_IDS,
-  fetchProducts,
+  fetchSubscriptionProducts,
   formatPrice,
   purchaseSubscription,
 } from "../../lib/iap";
@@ -28,14 +28,14 @@ const PERKS = [
 ];
 
 export default function SubscribeScreen() {
-  const [products, setProducts] = useState<Subscription[]>([]);
+  const [products, setProducts] = useState<ProductSubscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
-    fetchProducts()
+    fetchSubscriptionProducts()
       .then((subs) => {
         if (!mounted) return;
         setProducts(subs);
@@ -69,8 +69,8 @@ export default function SubscribeScreen() {
     }
   }
 
-  const monthly = products.find((p) => p.productId === PRODUCT_IDS.monthly);
-  const yearly = products.find((p) => p.productId === PRODUCT_IDS.yearly);
+  const monthly = products.find((p) => p.id === PRODUCT_IDS.monthly);
+  const yearly = products.find((p) => p.id === PRODUCT_IDS.yearly);
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.scroll}>

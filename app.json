@@ -7,7 +7,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -24,7 +23,8 @@
       ],
       "infoPlist": {
         "UIRequiresFullScreen": true,
-        "NSUserTrackingUsageDescription": "We use this to measure ad performance and improve recommendations. UnhingeTV will never sell your data."
+        "NSUserTrackingUsageDescription": "We use this to measure ad performance and improve recommendations. UnhingeTV will never sell your data.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -32,10 +32,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
-      "banner": "./assets/tv-banner.png",
       "package": "com.unhingetv.app",
-      "versionCode": 5,
-      "edgeToEdgeEnabled": true,
+      "versionCode": 6,
       "intentFilters": [
         {
           "action": "MAIN",
@@ -47,10 +45,19 @@
           "action": "VIEW",
           "autoVerify": true,
           "data": [
-            { "scheme": "https", "host": "unhingetv.com" },
-            { "scheme": "https", "host": "www.unhingetv.com" }
+            {
+              "scheme": "https",
+              "host": "unhingetv.com"
+            },
+            {
+              "scheme": "https",
+              "host": "www.unhingetv.com"
+            }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -68,6 +75,24 @@
         "react-native-iap",
         {
           "paymentProvider": "Both"
+        }
+      ],
+      [
+        "@react-native-tvos/config-tv",
+        {
+          "showVerboseWarnings": true
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "newArchEnabled": true,
+            "edgeToEdgeEnabled": true
+          },
+          "ios": {
+            "newArchEnabled": true
+          }
         }
       ]
     ],

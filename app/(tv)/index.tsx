@@ -12,13 +12,12 @@ import {
   Dimensions,
   Image,
   ActivityIndicator,
-  TVFocusGuideView,
-  findNodeHandle,
 } from "react-native";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { getShows, type Show } from "../../lib/api";
 import { Colors, FontSizes, Spacing } from "../../constants/theme";
+import { FocusableTouchable } from "../../components/FocusableTouchable";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -125,14 +124,13 @@ export default function TVHomeScreen() {
               <Text style={styles.heroGenre}>{featured.genre.slice(0, 3).join("  ·  ")}</Text>
             )}
             <Text style={styles.heroDesc} numberOfLines={3}>{featured.description}</Text>
-            <TouchableOpacity
+            <FocusableTouchable
               style={styles.playBtn}
               onPress={() => router.push(`/show/${featured.slug}`)}
-              activeOpacity={0.85}
-              hasTVPreferredFocus={false}
+              hasTVPreferredFocus
             >
               <Text style={styles.playBtnText}>▶   WATCH NOW</Text>
-            </TouchableOpacity>
+            </FocusableTouchable>
           </View>
         </View>
       )}
@@ -147,13 +145,13 @@ export default function TVHomeScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.rowContent}
           renderItem={({ item, index }) => (
-            <TouchableOpacity
+            <FocusableTouchable
               onFocus={() => setFocusedIdx(index)}
               onPress={() => router.push(`/show/${item.slug}`)}
-              activeOpacity={0.85}
+              hasTVPreferredFocus={index === 0}
             >
               <TVShowCard show={item} focused={focusedIdx === index} />
-            </TouchableOpacity>
+            </FocusableTouchable>
           )}
         />
       </View>
