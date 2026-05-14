@@ -63,7 +63,13 @@
       "expo-secure-store",
       "expo-video",
       "expo-font",
-      "expo-asset"
+      "expo-asset",
+      [
+        "react-native-iap",
+        {
+          "paymentProvider": "Both"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

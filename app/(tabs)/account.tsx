@@ -156,7 +156,7 @@ export default function AccountScreen() {
           {!isActive && (
             <TouchableOpacity
               style={styles.subBtn}
-              onPress={() => {/* Open subscribe screen or deep link */}}
+              onPress={() => router.push("/(auth)/subscribe")}
               activeOpacity={0.85}
             >
               <Text style={styles.subBtnText}>Subscribe</Text>
