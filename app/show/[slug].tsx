@@ -23,6 +23,7 @@ import {
 import { getShow, type Show, type Season, type Episode } from "../../lib/api";
 import { Colors, Fonts, FontSizes, Radius, Spacing } from "../../constants/theme";
 import { useAuth } from "../../hooks/useAuth";
+import { ShowDetailSkeleton } from "../../components/ui";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const BANNER_H = SCREEN_W * 0.55;
@@ -122,11 +123,7 @@ export default function ShowDetailScreen() {
       user.subscription?.status === "TRIALING");
 
   if (loading) {
-    return (
-      <View style={styles.loader}>
-        <ActivityIndicator color={Colors.red} size="large" />
-      </View>
-    );
+    return <ShowDetailSkeleton />;
   }
 
   if (!show) {

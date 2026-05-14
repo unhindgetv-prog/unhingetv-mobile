@@ -15,6 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Play, Star } from "lucide-react-native";
 import { getShows, type Show } from "../../lib/api";
 import { Colors, Fonts, FontSizes, Radius, Spacing } from "../../constants/theme";
+import { GridSkeleton } from "../../components/ui";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const NUM_COLS = 2;
@@ -113,11 +114,7 @@ export default function ShowsScreen() {
     : shows.filter((s) => s.accessType === filter);
 
   if (loading) {
-    return (
-      <View style={styles.loader}>
-        <ActivityIndicator color={Colors.red} size="large" />
-      </View>
-    );
+    return <GridSkeleton />;
   }
 
   return (

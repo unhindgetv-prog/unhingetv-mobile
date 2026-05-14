@@ -13,7 +13,7 @@ import { VideoView, useVideoPlayer } from "expo-video";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ScreenOrientation from "expo-screen-orientation";
-import { ArrowLeft, AlertCircle, Maximize2, Play } from "lucide-react-native";
+import { ArrowLeft, AlertCircle, Maximize2, Play, Loader } from "lucide-react-native";
 import { getEpisode, saveProgress, type Episode } from "../../lib/api";
 import {
   Colors,
@@ -139,6 +139,11 @@ export default function WatchScreen() {
     return <WatchSkeleton onBack={() => router.back()} />;
   }
 
+  // Distinguish "still encoding" from "real error". Mux returns PREPARING /
+  // WAITING while transcoding; the episode exists but isn't playable yet.
+  const isProcessing =
+    !!episode && episode.muxStatus !== "READY" && episode.muxStatus !== "ERRORED";
+
   if (error || !episode) {
     return (
       <View style={styles.errorRoot}>
@@ -147,12 +152,29 @@ export default function WatchScreen() {
           locations={[0, 0.4, 1]}
           style={StyleSheet.absoluteFillObject}
         />
-        <View style={styles.errIconCircle}>
-          <AlertCircle size={32} color={Colors.white} strokeWidth={2.5} />
+        <View
+          style={[
+            styles.errIconCircle,
+            isProcessing && { backgroundColor: Colors.gold },
+          ]}
+        >
+          {isProcessing ? (
+            <Loader size={32} color={Colors.black} strokeWidth={2.5} />
+          ) : (
+            <AlertCircle size={32} color={Colors.white} strokeWidth={2.5} />
+          )}
         </View>
-        <Text style={styles.errEyebrow}>· PLAYBACK ERROR ·</Text>
-        <Text style={styles.errTitle}>CAN&apos;T PLAY</Text>
-        <Text style={styles.errBody}>{error ?? "Episode not found."}</Text>
+        <Text style={[styles.errEyebrow, isProcessing && { color: Colors.gold }]}>
+          {isProcessing ? "· STILL ENCODING ·" : "· PLAYBACK ERROR ·"}
+        </Text>
+        <Text style={styles.errTitle}>
+          {isProcessing ? "ALMOST READY" : "CAN'T PLAY"}
+        </Text>
+        <Text style={styles.errBody}>
+          {isProcessing
+            ? `${episode?.title ? `"${episode.title}" ` : ""}is still processing on our servers. This usually takes a few minutes. Check back shortly.`
+            : (error ?? "Episode not found.")}
+        </Text>
         <PrimaryButton
           label="Go Back"
           onPress={() => router.back()}

@@ -15,7 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Play, Star, Bell, Sparkles, Flame, Lock } from "lucide-react-native";
 import { getShows, getComingSoonShows, type Show } from "../../lib/api";
 import { Colors, Fonts, FontSizes, Radius, Spacing } from "../../constants/theme";
-import { BrandLogo } from "../../components/ui";
+import { BrandLogo, HomeSkeleton } from "../../components/ui";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const HERO_HEIGHT = Math.round(SCREEN_W * 0.95);
@@ -250,11 +250,7 @@ export default function HomeScreen() {
   const all      = shows;
 
   if (loading) {
-    return (
-      <View style={styles.loader}>
-        <ActivityIndicator color={Colors.red} size="large" />
-      </View>
-    );
+    return <HomeSkeleton />;
   }
 
   return (

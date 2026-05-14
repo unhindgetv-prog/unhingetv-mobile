@@ -14,7 +14,8 @@ import {
 import { router } from "expo-router";
 import { Search, X, Film, Play } from "lucide-react-native";
 import { search, type SearchResults } from "../../lib/api";
-import { Colors, Fonts, FontSizes, Radius, Spacing } from "../../constants/theme";
+import { Colors, Fonts, FontSizes, Radius, Spacing, Glow } from "../../constants/theme";
+import { Skeleton } from "../../components/ui";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
@@ -34,6 +35,7 @@ export default function SearchScreen() {
   const [results, setResults]   = useState<SearchResults | null>(null);
   const [loading, setLoading]   = useState(false);
   const [searched, setSearched] = useState(false);
+  const [focused, setFocused]   = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const doSearch = useCallback(async (q: string) => {
@@ -72,13 +74,14 @@ export default function SearchScreen() {
     <View style={styles.root}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>Search</Text>
+        <Text style={styles.eyebrow}>EXPLORE THE NETWORK</Text>
+        <Text style={styles.pageTitle}>SEARCH</Text>
 
         {/* Search bar */}
-        <View style={[styles.bar, query.length > 0 && styles.barActive]}>
+        <View style={[styles.bar, (focused || query.length > 0) && styles.barActive]}>
           {loading
             ? <ActivityIndicator size="small" color={Colors.red} style={{ marginRight: 8 }} />
-            : <Search size={18} color={Colors.textMuted} style={{ marginRight: 8 }} />
+            : <Search size={18} color={focused ? Colors.red : Colors.textMuted} style={{ marginRight: 8 }} />
           }
           <TextInput
             style={styles.input}
@@ -90,6 +93,8 @@ export default function SearchScreen() {
             clearButtonMode="never"
             autoCorrect={false}
             autoCapitalize="none"
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
           />
           {query.length > 0 && (
             <TouchableOpacity onPress={() => setQuery("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -113,6 +118,29 @@ export default function SearchScreen() {
             </View>
             <Text style={styles.emptyTitle}>Find your next show</Text>
             <Text style={styles.emptySub}>Search by title, genre, or episode name</Text>
+          </View>
+        )}
+
+        {/* Loading skeleton (mid-search, no stale results) */}
+        {loading && !hasResults && query.length >= 2 && (
+          <View style={{ paddingHorizontal: Spacing.md, paddingTop: Spacing.md }}>
+            <Skeleton width={120} height={11} style={{ marginBottom: 10 }} />
+            <View style={{ flexDirection: "row", gap: 10, marginBottom: Spacing.lg }}>
+              <Skeleton width={120} height={180} radius={Radius.md} />
+              <Skeleton width={120} height={180} radius={Radius.md} />
+              <Skeleton width={120} height={180} radius={Radius.md} />
+            </View>
+            <Skeleton width={120} height={11} style={{ marginBottom: 10 }} />
+            {[0, 1, 2].map((i) => (
+              <View key={i} style={{ flexDirection: "row", gap: 10, marginBottom: 10 }}>
+                <Skeleton width={130} height={75} radius={Radius.sm} />
+                <View style={{ flex: 1, gap: 6, justifyContent: "center" }}>
+                  <Skeleton width={80} height={9} />
+                  <Skeleton width={"90%"} height={14} />
+                  <Skeleton width={"60%"} height={11} />
+                </View>
+              </View>
+            ))}
           </View>
         )}
 
@@ -224,19 +252,28 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.sm,
     backgroundColor: Colors.black,
   },
+  eyebrow: {
+    fontFamily: Fonts.barlow,
+    fontSize: 11,
+    fontWeight: "700",
+    color: Colors.red,
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    marginBottom: 4,
+  },
   pageTitle: {
     fontFamily: Fonts.bebas,
     fontSize: 36,
     color: Colors.white,
     letterSpacing: 2,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
     includeFontPadding: false,
     lineHeight: 36,
   },
   bar: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.dark,
     borderWidth: 1,
     borderColor: Colors.cardBorder,
     borderRadius: Radius.lg,
@@ -244,7 +281,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   barActive: {
-    borderColor: Colors.red,
+    borderColor: Colors.redBorder,
+    ...Glow.redSm,
   },
   input: {
     flex: 1,
