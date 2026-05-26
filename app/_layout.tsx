@@ -1,4 +1,5 @@
-import { Stack } from "expo-router";
+import { useEffect, useState } from "react";
+import { Stack, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useFonts, BebasNeue_400Regular } from "@expo-google-fonts/bebas-neue";
 import {
@@ -9,6 +10,7 @@ import { View } from "react-native";
 import { AuthProvider } from "../hooks/useAuth";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Sentry } from "../lib/sentry";
+import { hasPassedAgeGate } from "./age-gate";
 
 function RootLayoutImpl() {
   // Brand display fonts. Until they load, fall back to a hidden black screen
@@ -19,7 +21,24 @@ function RootLayoutImpl() {
     BarlowCondensed_700Bold,
   });
 
-  if (!fontsLoaded) {
+  // App Store guideline 1.1.6: 17+ content must gate at first launch. The
+  // age-gate screen writes to AsyncStorage on success; here we just redirect
+  // any session that hasn't passed it yet.
+  const [ageReady, setAgeReady] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const passed = await hasPassedAgeGate();
+      if (cancelled) return;
+      if (!passed) router.replace("/age-gate");
+      setAgeReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!fontsLoaded || !ageReady) {
     return <View style={{ flex: 1, backgroundColor: "#000000" }} />;
   }
 

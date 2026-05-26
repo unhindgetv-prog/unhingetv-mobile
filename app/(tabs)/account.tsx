@@ -7,6 +7,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import { router } from "expo-router";
 import {
@@ -14,14 +15,24 @@ import {
   Crown,
   LogOut,
   ChevronRight,
-  BookMarked,
-  Settings,
   Star,
+  RefreshCw,
+  FileText,
+  ShieldCheck,
+  Mail,
+  Trash2,
+  ExternalLink,
 } from "lucide-react-native";
 import { useAuth } from "../../hooks/useAuth";
 import { getSubscription } from "../../lib/api";
+import { restorePurchases } from "../../lib/iap";
 import { Colors, Fonts, FontSizes, Radius, Spacing, Glow } from "../../constants/theme";
 import { BrandLogo, PrimaryButton } from "../../components/ui";
+import Constants from "expo-constants";
+
+const WEB_URL =
+  (Constants.expoConfig?.extra?.apiUrl as string | undefined) ??
+  "https://unhingetv.com";
 
 interface SubInfo {
   status: string;
@@ -67,6 +78,9 @@ export default function AccountScreen() {
     }
   }, [token]);
 
+  const [restoring, setRestoring] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   async function handleLogout() {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },
@@ -79,6 +93,90 @@ export default function AccountScreen() {
         },
       },
     ]);
+  }
+
+  async function handleRestore() {
+    if (restoring) return;
+    setRestoring(true);
+    try {
+      const restored = await restorePurchases();
+      if (restored) {
+        setSub({
+          status: restored.status,
+          plan: restored.plan,
+          currentPeriodEnd: restored.currentPeriodEnd,
+        });
+        Alert.alert("Purchases Restored", "Your subscription is active.");
+      } else {
+        Alert.alert(
+          "No Purchases Found",
+          "We didn't find any previous purchases on this Apple ID."
+        );
+      }
+    } catch (err) {
+      Alert.alert(
+        "Restore Failed",
+        err instanceof Error ? err.message : "Please try again."
+      );
+    } finally {
+      setRestoring(false);
+    }
+  }
+
+  function handleManageSubscription() {
+    // Apple requires that cancellation be directed to App Store settings, not
+    // handled in-app for IAP subscriptions.
+    Linking.openURL("https://apps.apple.com/account/subscriptions").catch(() => {
+      Alert.alert(
+        "Manage Subscription",
+        "Open Settings → Apple ID → Subscriptions to manage."
+      );
+    });
+  }
+
+  async function handleDeleteAccount() {
+    Alert.alert(
+      "Delete Account",
+      "This permanently deletes your account, watch history, ratings, and comments. " +
+        "If you have an active App Store subscription, cancel it separately in " +
+        "Settings → Apple ID → Subscriptions. This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete Account",
+          style: "destructive",
+          onPress: async () => {
+            if (!token) return;
+            setDeleting(true);
+            try {
+              const res = await fetch(`${WEB_URL}/api/account/delete`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Cookie: `next-auth.session-token=${token}`,
+                },
+              });
+              if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+              }
+              await logout();
+              Alert.alert(
+                "Account Deleted",
+                "Your account has been permanently removed."
+              );
+              router.replace("/(auth)/login");
+            } catch (err) {
+              Alert.alert(
+                "Delete Failed",
+                err instanceof Error ? err.message : "Please contact support@unhingetv.com"
+              );
+            } finally {
+              setDeleting(false);
+            }
+          },
+        },
+      ]
+    );
   }
 
   // Not logged in
@@ -179,20 +277,46 @@ export default function AccountScreen() {
         )}
       </View>
 
-      {/* Menu */}
+      {/* Subscription management */}
       <View style={styles.menuGroup}>
         <MenuItem
-          icon={<BookMarked size={18} color={Colors.textSub} />}
-          label="My Watchlist"
-          onPress={() => {/* Navigate to watchlist */}}
+          icon={<RefreshCw size={18} color={Colors.textSub} />}
+          label="Restore Purchases"
+          onPress={handleRestore}
+          right={restoring ? <ActivityIndicator size="small" color={Colors.red} /> : undefined}
+        />
+        {isActive && (
+          <MenuItem
+            icon={<ExternalLink size={18} color={Colors.textSub} />}
+            label="Manage Subscription"
+            onPress={handleManageSubscription}
+          />
+        )}
+      </View>
+
+      {/* Legal */}
+      <View style={[styles.menuGroup, { marginTop: Spacing.sm }]}>
+        <MenuItem
+          icon={<FileText size={18} color={Colors.textSub} />}
+          label="Terms of Use"
+          onPress={() => Linking.openURL(`${WEB_URL}/terms`)}
+          right={<ExternalLink size={14} color={Colors.textFaint} />}
         />
         <MenuItem
-          icon={<Settings size={18} color={Colors.textSub} />}
-          label="Settings"
-          onPress={() => {/* Navigate to settings */}}
+          icon={<ShieldCheck size={18} color={Colors.textSub} />}
+          label="Privacy Policy"
+          onPress={() => Linking.openURL(`${WEB_URL}/privacy`)}
+          right={<ExternalLink size={14} color={Colors.textFaint} />}
+        />
+        <MenuItem
+          icon={<Mail size={18} color={Colors.textSub} />}
+          label="Contact Support"
+          onPress={() => Linking.openURL(`mailto:support@unhingetv.com`)}
+          right={<ExternalLink size={14} color={Colors.textFaint} />}
         />
       </View>
 
+      {/* Account actions */}
       <View style={[styles.menuGroup, { marginTop: Spacing.sm }]}>
         <MenuItem
           icon={<LogOut size={18} color={Colors.red} />}
@@ -200,6 +324,13 @@ export default function AccountScreen() {
           onPress={handleLogout}
           danger
           right={<View />}
+        />
+        <MenuItem
+          icon={<Trash2 size={18} color={Colors.red} />}
+          label="Delete Account"
+          onPress={handleDeleteAccount}
+          danger
+          right={deleting ? <ActivityIndicator size="small" color={Colors.red} /> : <View />}
         />
       </View>
 

@@ -19,6 +19,7 @@ import {
   fetchProducts,
   requestPurchase,
   finishTransaction,
+  getAvailablePurchases,
   purchaseUpdatedListener,
   purchaseErrorListener,
   type ProductSubscription,
@@ -234,6 +235,35 @@ async function validateAndFinish(
   // user's queue still has it and we can re-validate.
   await finishTransaction({ purchase, isConsumable: false });
   return response;
+}
+
+/**
+ * App Store Guideline 3.1.1: Restore Purchases must be available. Reads the
+ * platform's existing purchase history, posts each subscription receipt to the
+ * server, returns the most-recent validated response (or null if nothing to
+ * restore).
+ */
+export async function restorePurchases(): Promise<ValidateResponse | null> {
+  await connect();
+  const sessionToken = await SecureStore.getItemAsync("unhingetv_session");
+  if (!sessionToken) throw new Error("Not authenticated");
+
+  const purchases = await getAvailablePurchases();
+  const ours = purchases.filter((p) =>
+    (ALL_SKUS as readonly string[]).includes(p.productId)
+  );
+  if (ours.length === 0) return null;
+
+  let latest: ValidateResponse | null = null;
+  for (const purchase of ours) {
+    try {
+      const validated = await validateAndFinish(purchase, sessionToken);
+      latest = validated;
+    } catch {
+      // Skip individual failures; surface the most recent successful restore.
+    }
+  }
+  return latest;
 }
 
 // Legacy aliases — kept for existing call-sites until they migrate.

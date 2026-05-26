@@ -29,7 +29,7 @@ import { BrandLogo, PrimaryButton, GlassCard } from "../../components/ui";
 const { height: SCREEN_H } = Dimensions.get("window");
 
 const BASE_URL =
-  (Constants.expoConfig?.extra?.apiUrl as string) ?? "https://unhingetv.vercel.app";
+  (Constants.expoConfig?.extra?.apiUrl as string) ?? "https://unhingetv.com";
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");

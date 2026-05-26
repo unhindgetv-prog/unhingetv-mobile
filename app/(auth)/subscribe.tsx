@@ -9,6 +9,7 @@ import {
   ScrollView,
   Platform,
   Dimensions,
+  Linking,
 } from "react-native";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -170,9 +171,21 @@ export default function SubscribeScreen() {
           current period. Manage or cancel anytime in your{" "}
           {Platform.OS === "ios" ? "App Store account settings" : "Play Store subscriptions"}.
         </Text>
-        <Text style={styles.legalLinks}>
-          unhingetv.com/terms  ·  unhingetv.com/privacy
-        </Text>
+        <View style={styles.legalLinksRow}>
+          <Text
+            style={styles.legalLink}
+            onPress={() => Linking.openURL("https://unhingetv.com/terms")}
+          >
+            Terms of Use
+          </Text>
+          <Text style={styles.legalLinkSep}>·</Text>
+          <Text
+            style={styles.legalLink}
+            onPress={() => Linking.openURL("https://unhingetv.com/privacy")}
+          >
+            Privacy Policy
+          </Text>
+        </View>
       </ScrollView>
     </View>
   );
@@ -348,12 +361,23 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xl,
     lineHeight: 14,
   },
-  legalLinks: {
+  legalLinksRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 6,
+    gap: 6,
+  },
+  legalLink: {
+    fontSize: 10,
+    color: Colors.red,
+    textAlign: "center",
+    letterSpacing: 0.5,
+    textDecorationLine: "underline",
+  },
+  legalLinkSep: {
     fontSize: 10,
     color: Colors.textFaint,
-    textAlign: "center",
-    marginTop: 6,
-    letterSpacing: 0.5,
   },
   error: {
     color: Colors.red,

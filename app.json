@@ -14,7 +14,7 @@
     },
     "scheme": "unhingetv",
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.unhingetv.app",
       "backgroundColor": "#000000",
       "associatedDomains": [
@@ -47,7 +47,7 @@
         "backgroundColor": "#000000"
       },
       "package": "com.unhingetv.app",
-      "versionCode": 6,
+      "versionCode": 7,
       "intentFilters": [
         {
           "action": "MAIN",
@@ -115,7 +115,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiUrl": "https://unhingetv.vercel.app",
+      "apiUrl": "https://unhingetv.com",
       "muxEnvKey": "9og1ccmli19nha7mho0hklmb9",
       "router": {},
       "eas": {
