@@ -45,10 +45,14 @@ export default function WatchScreen() {
   const saveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const videoRef = useRef<VideoView | null>(null);
 
-  // Build HLS URL from Mux playback ID
-  const muxUrl = episode?.muxPlaybackId
-    ? `${MUX_STREAM_BASE}/${episode.muxPlaybackId}.m3u8`
-    : null;
+  // Build HLS URL from Mux playback ID.
+  // Signed-policy assets: server returns muxStreamUrl with a baked-in 6h JWT token.
+  // Public-policy assets: construct the URL from muxPlaybackId locally.
+  const muxUrl = episode?.muxStreamUrl
+    ? episode.muxStreamUrl
+    : episode?.muxPlaybackId
+      ? `${MUX_STREAM_BASE}/${episode.muxPlaybackId}.m3u8`
+      : null;
 
   const player = useVideoPlayer(muxUrl ?? "", (p) => {
     p.loop = false;

@@ -153,7 +153,7 @@ export default function AccountScreen() {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
-                  Cookie: `next-auth.session-token=${token}`,
+                  Cookie: `__Secure-next-auth.session-token=${token}; next-auth.session-token=${token}`,
                 },
               });
               if (!res.ok) {

@@ -33,6 +33,15 @@ export async function clearToken(): Promise<void> {
   await SecureStore.deleteItemAsync(TOKEN_KEY);
 }
 
+/**
+ * NextAuth uses two cookie names depending on whether the request is HTTPS:
+ * dev (HTTP) → `next-auth.session-token`, prod (HTTPS) → `__Secure-next-auth.session-token`.
+ * Mobile sends both so the server picks up whichever it's configured to look for.
+ */
+export function sessionCookieHeader(token: string): string {
+  return `__Secure-next-auth.session-token=${token}; next-auth.session-token=${token}`;
+}
+
 // ─── Base fetch ───────────────────────────────────────────────────────────────
 
 async function apiFetch<T>(
@@ -109,7 +118,7 @@ export async function getMe(token?: string): Promise<AuthUser> {
   const t = token ?? (await getStoredToken());
   if (!t) throw new Error("Not authenticated");
   return apiFetch<AuthUser>("/api/auth/session", {
-    headers: { Cookie: `next-auth.session-token=${t}` },
+    headers: { Cookie: sessionCookieHeader(t) },
   });
 }
 
@@ -157,6 +166,10 @@ export interface Episode {
   thumbnail: string | null;
   duration: number | null;
   muxPlaybackId: string | null;
+  /** "signed" → use muxStreamUrl. "public" → muxPlaybackId is enough. */
+  muxPlaybackPolicy?: "public" | "signed";
+  /** Pre-signed HLS URL for signed-policy assets. Expires 6h. */
+  muxStreamUrl?: string | null;
   muxStatus: string;
   isFree: boolean;
   accessType: string;
@@ -185,7 +198,7 @@ export async function getSubscription(token: string): Promise<{
     // API returns { subscription: sub | null }
     const data = await apiFetch<{ subscription: { status: string; plan: string; currentPeriodEnd: string | null } | null }>(
       `/api/subscriptions`,
-      { headers: { Cookie: `next-auth.session-token=${token}` } }
+      { headers: { Cookie: sessionCookieHeader(token) } }
     );
     return data.subscription ?? null;
   } catch {
@@ -213,7 +226,7 @@ export async function saveProgress(
 ): Promise<void> {
   await apiFetch("/api/history", {
     method: "POST",
-    headers: { Cookie: `next-auth.session-token=${token}` },
+    headers: { Cookie: sessionCookieHeader(token) },
     body: JSON.stringify({ episodeId, progress }),
   });
 }
@@ -227,7 +240,7 @@ export async function toggleWatchlist(
 ): Promise<void> {
   await apiFetch("/api/watchlist", {
     method: action === "add" ? "POST" : "DELETE",
-    headers: { Cookie: `next-auth.session-token=${token}` },
+    headers: { Cookie: sessionCookieHeader(token) },
     body: JSON.stringify({ showId }),
   });
 }
