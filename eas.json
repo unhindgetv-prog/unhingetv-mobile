@@ -1,23 +1,36 @@
 {
   "cli": {
-    "version": ">= 16.0.0"
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "ios": { "simulator": true },
-      "android": { "buildType": "apk" }
+      "ios": {
+        "simulator": true
+      },
+      "android": {
+        "buildType": "apk"
+      }
     },
     "preview": {
       "distribution": "internal",
-      "ios": { "simulator": false },
-      "android": { "buildType": "apk" }
+      "ios": {
+        "simulator": false
+      },
+      "android": {
+        "buildType": "apk"
+      }
     },
     "production": {
       "autoIncrement": true,
-      "ios": { "buildConfiguration": "Release" },
-      "android": { "buildType": "app-bundle" }
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
     },
     "apple-tv": {
       "autoIncrement": true,
@@ -53,7 +66,10 @@
     "production": {
       "ios": {
         "ascAppId": "6772856553",
-        "appleTeamId": "NF9KUYJ4W7"
+        "appleTeamId": "NF9KUYJ4W7",
+        "ascApiKeyPath": "./.eas-keys/AuthKey_3G4B25H6B5.p8",
+        "ascApiKeyIssuerId": "c85af96e-9dbe-4788-8215-9709dd4796a0",
+        "ascApiKeyId": "3G4B25H6B5"
       },
       "android": {
         "serviceAccountKeyPath": "./google-service-account.json",
