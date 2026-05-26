@@ -29,7 +29,6 @@ import {
   type PurchaseError,
   type EventSubscription,
 } from "react-native-iap";
-import * as SecureStore from "expo-secure-store";
 import Constants from "expo-constants";
 
 // See lib/api.ts for the canonical resolution order — EAS Secret → app.json extra
@@ -111,13 +110,12 @@ function isAmazonPurchase(p: Purchase): p is Purchase & {
   return typeof x.userIdAmazon === "string" && typeof x.receiptId === "string";
 }
 
-async function postValidate(body: object, sessionToken: string): Promise<ValidateResponse> {
+async function postValidate(body: object): Promise<ValidateResponse> {
+  // Auth cookie is auto-attached by NSURLSession's cookie jar via credentials: "include".
   const res = await fetch(`${BASE_URL}/api/iap/validate`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Cookie: `__Secure-authjs.session-token=${sessionToken}; authjs.session-token=${sessionToken}; __Secure-next-auth.session-token=${sessionToken}; next-auth.session-token=${sessionToken}`,
-    },
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
@@ -137,14 +135,12 @@ async function postValidate(body: object, sessionToken: string): Promise<Validat
 export async function purchaseSubscription(sku: string): Promise<ValidateResponse> {
   await connect();
 
-  const sessionToken = await SecureStore.getItemAsync("unhingetv_session");
-  if (!sessionToken) throw new Error("Not authenticated");
-
   // Set up listeners BEFORE requesting purchase so we never miss the event.
+  // Auth is handled via the persistent NSURLSession cookie jar — no manual token.
   const result = new Promise<ValidateResponse>((resolve, reject) => {
     updateSub = purchaseUpdatedListener(async (purchase: Purchase) => {
       try {
-        const validated = await validateAndFinish(purchase, sessionToken);
+        const validated = await validateAndFinish(purchase);
         resolve(validated);
       } catch (err) {
         reject(err);
@@ -194,41 +190,29 @@ export async function purchaseSubscription(sku: string): Promise<ValidateRespons
   return result;
 }
 
-async function validateAndFinish(
-  purchase: Purchase,
-  sessionToken: string
-): Promise<ValidateResponse> {
+async function validateAndFinish(purchase: Purchase): Promise<ValidateResponse> {
   let response: ValidateResponse;
 
   if (Platform.OS === "ios") {
     // StoreKit 2 path: purchase.transactionId is the signed JWS transaction id.
     const transactionId = (purchase as { transactionId?: string }).transactionId;
-    response = await postValidate(
-      { platform: "apple", transactionId },
-      sessionToken
-    );
+    response = await postValidate({ platform: "apple", transactionId });
   } else if (isAmazonPurchase(purchase)) {
     // Fire TV / Amazon Appstore install — receipt validates via Amazon RVS.
-    response = await postValidate(
-      {
-        platform: "amazon",
-        receiptId: purchase.receiptId,
-        amazonUserId: purchase.userIdAmazon,
-        productId: purchase.productId,
-      },
-      sessionToken
-    );
+    response = await postValidate({
+      platform: "amazon",
+      receiptId: purchase.receiptId,
+      amazonUserId: purchase.userIdAmazon,
+      productId: purchase.productId,
+    });
   } else {
     const purchaseToken = (purchase as { purchaseToken?: string | null }).purchaseToken;
     if (!purchaseToken) throw new Error("Missing purchaseToken on Android purchase");
-    response = await postValidate(
-      {
-        platform: "google",
-        purchaseToken,
-        productId: purchase.productId,
-      },
-      sessionToken
-    );
+    response = await postValidate({
+      platform: "google",
+      purchaseToken,
+      productId: purchase.productId,
+    });
   }
 
   // Only finish the txn after the server confirms — otherwise on retry the
@@ -245,8 +229,6 @@ async function validateAndFinish(
  */
 export async function restorePurchases(): Promise<ValidateResponse | null> {
   await connect();
-  const sessionToken = await SecureStore.getItemAsync("unhingetv_session");
-  if (!sessionToken) throw new Error("Not authenticated");
 
   const purchases = await getAvailablePurchases();
   const ours = purchases.filter((p) =>
@@ -257,7 +239,7 @@ export async function restorePurchases(): Promise<ValidateResponse | null> {
   let latest: ValidateResponse | null = null;
   for (const purchase of ours) {
     try {
-      const validated = await validateAndFinish(purchase, sessionToken);
+      const validated = await validateAndFinish(purchase);
       latest = validated;
     } catch {
       // Skip individual failures; surface the most recent successful restore.

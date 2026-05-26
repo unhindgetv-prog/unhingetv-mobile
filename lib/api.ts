@@ -1,4 +1,3 @@
-import * as SecureStore from "expo-secure-store";
 import Constants from "expo-constants";
 
 // Resolution order:
@@ -13,41 +12,14 @@ const BASE_URL =
   (Constants.expoConfig?.extra?.apiUrl as string | undefined) ??
   "https://unhingetv.com";
 
-// ─── Token storage ────────────────────────────────────────────────────────────
-
-const TOKEN_KEY = "unhingetv_session";
-
-export async function getStoredToken(): Promise<string | null> {
-  try {
-    return await SecureStore.getItemAsync(TOKEN_KEY);
-  } catch {
-    return null;
-  }
-}
-
-export async function storeToken(token: string): Promise<void> {
-  await SecureStore.setItemAsync(TOKEN_KEY, token);
-}
-
-export async function clearToken(): Promise<void> {
-  await SecureStore.deleteItemAsync(TOKEN_KEY);
-}
-
-/**
- * Auth.js v5 (NextAuth's new name) uses `authjs.*` cookie names — NOT `next-auth.*`
- * like v4. Cookie name also has the `__Secure-` prefix in HTTPS production.
- * We send all four common variants so the server matches whichever it expects.
- */
-export function sessionCookieHeader(token: string): string {
-  return [
-    `__Secure-authjs.session-token=${token}`,
-    `authjs.session-token=${token}`,
-    `__Secure-next-auth.session-token=${token}`,
-    `next-auth.session-token=${token}`,
-  ].join("; ");
-}
-
 // ─── Base fetch ───────────────────────────────────────────────────────────────
+//
+// React Native's `fetch` strips `Set-Cookie` from response headers (it's a
+// "forbidden response header" per the Fetch spec), so we can't read the session
+// token out of the login response. Instead we trust iOS's NSURLSession cookie
+// jar to capture and persist cookies across requests + app launches, and verify
+// auth state by calling `/api/auth/session` (which echoes the user object if
+// the cookie is valid). Every authenticated call passes `credentials: "include"`.
 
 async function apiFetch<T>(
   path: string,
@@ -59,7 +31,11 @@ async function apiFetch<T>(
     ...(options.headers ?? {}),
   };
 
-  const res = await fetch(url, { ...options, headers });
+  const res = await fetch(url, {
+    credentials: "include",
+    ...options,
+    headers,
+  });
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -80,35 +56,38 @@ export interface AuthUser {
   subscription?: { status: string; plan: string } | null;
 }
 
+interface AuthJsSessionResponse {
+  user?: AuthUser;
+  expires?: string;
+}
+
 export async function login(email: string, password: string): Promise<AuthUser> {
-  // Step 1: fetch CSRF token required by NextAuth v5
-  const csrfRes = await fetch(`${BASE_URL}/api/auth/csrf`);
+  // Step 1: fetch CSRF token. The Set-Cookie containing the CSRF cookie is
+  // automatically stored by NSURLSession; we just need the token value for the body.
+  const csrfRes = await fetch(`${BASE_URL}/api/auth/csrf`, { credentials: "include" });
   const { csrfToken } = (await csrfRes.json()) as { csrfToken: string };
 
-  // Step 2: POST credentials with the real CSRF token
-  const res = await fetch(`${BASE_URL}/api/auth/callback/credentials`, {
+  // Step 2: POST credentials. NSURLSession sends the CSRF cookie from step 1
+  // automatically and captures the session cookie the server returns on success.
+  // We do NOT try to read the Set-Cookie header — RN strips it.
+  const credRes = await fetch(`${BASE_URL}/api/auth/callback/credentials`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Cookie: csrfRes.headers.get("set-cookie") ?? "",
-    },
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    credentials: "include",
     body: new URLSearchParams({ email, password, csrfToken, json: "true" }),
     redirect: "manual",
   });
 
-  // Auth.js v5 returns a 302 on success — extract session token from Set-Cookie.
-  // Try Auth.js v5 cookie names first (current production), fall back to v4 names.
-  const setCookie = res.headers.get("set-cookie") ?? "";
-  const sessionToken =
-    setCookie.match(/__Secure-authjs\.session-token=([^;]+)/)?.[1] ??
-    setCookie.match(/authjs\.session-token=([^;]+)/)?.[1] ??
-    setCookie.match(/__Secure-next-auth\.session-token=([^;]+)/)?.[1] ??
-    setCookie.match(/next-auth\.session-token=([^;]+)/)?.[1];
+  // Auth.js v5 redirects on both success AND failure (failure includes ?error=).
+  // Distinguish by hitting /api/auth/session and seeing if a user was authenticated.
+  const location = credRes.headers.get("location") ?? "";
+  if (location.includes("error=")) {
+    throw new Error("Invalid email or password");
+  }
 
-  if (!sessionToken) throw new Error("Invalid email or password");
-  await storeToken(sessionToken);
-
-  return getMe(sessionToken);
+  const me = await getMe();
+  if (!me) throw new Error("Invalid email or password");
+  return me;
 }
 
 export async function register(
@@ -122,16 +101,38 @@ export async function register(
   });
 }
 
-export async function getMe(token?: string): Promise<AuthUser> {
-  const t = token ?? (await getStoredToken());
-  if (!t) throw new Error("Not authenticated");
-  return apiFetch<AuthUser>("/api/auth/session", {
-    headers: { Cookie: sessionCookieHeader(t) },
-  });
+/**
+ * Returns the authenticated user if the session cookie is valid, otherwise null.
+ * NSURLSession auto-attaches the persisted session cookie via credentials: "include".
+ */
+export async function getMe(): Promise<AuthUser | null> {
+  try {
+    const res = await fetch(`${BASE_URL}/api/auth/session`, { credentials: "include" });
+    if (!res.ok) return null;
+    const session = (await res.json()) as AuthJsSessionResponse;
+    return session.user ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function logout(): Promise<void> {
-  await clearToken();
+  // Step 1: fetch CSRF (required by Auth.js v5 sign-out)
+  try {
+    const csrfRes = await fetch(`${BASE_URL}/api/auth/csrf`, { credentials: "include" });
+    const { csrfToken } = (await csrfRes.json()) as { csrfToken: string };
+
+    // Step 2: POST signout — server clears the session cookie via Set-Cookie with Max-Age=0
+    await fetch(`${BASE_URL}/api/auth/signout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      credentials: "include",
+      body: new URLSearchParams({ csrfToken, json: "true" }),
+      redirect: "manual",
+    });
+  } catch {
+    // Best-effort — even if signout fails server-side, we don't have a token to clear locally.
+  }
 }
 
 // ─── Shows ────────────────────────────────────────────────────────────────────
@@ -197,17 +198,15 @@ export async function getEpisode(id: string): Promise<Episode> {
 
 // ─── Subscription ─────────────────────────────────────────────────────────────
 
-export async function getSubscription(token: string): Promise<{
+export async function getSubscription(): Promise<{
   status: string;
   plan: string;
   currentPeriodEnd: string | null;
 } | null> {
   try {
-    // API returns { subscription: sub | null }
-    const data = await apiFetch<{ subscription: { status: string; plan: string; currentPeriodEnd: string | null } | null }>(
-      `/api/subscriptions`,
-      { headers: { Cookie: sessionCookieHeader(token) } }
-    );
+    const data = await apiFetch<{
+      subscription: { status: string; plan: string; currentPeriodEnd: string | null } | null;
+    }>(`/api/subscriptions`);
     return data.subscription ?? null;
   } catch {
     return null;
@@ -227,28 +226,18 @@ export async function search(q: string): Promise<SearchResults> {
 
 // ─── Watch history ────────────────────────────────────────────────────────────
 
-export async function saveProgress(
-  episodeId: string,
-  progress: number,
-  token: string
-): Promise<void> {
+export async function saveProgress(episodeId: string, progress: number): Promise<void> {
   await apiFetch("/api/history", {
     method: "POST",
-    headers: { Cookie: sessionCookieHeader(token) },
     body: JSON.stringify({ episodeId, progress }),
   });
 }
 
 // ─── Watchlist ────────────────────────────────────────────────────────────────
 
-export async function toggleWatchlist(
-  showId: string,
-  action: "add" | "remove",
-  token: string
-): Promise<void> {
+export async function toggleWatchlist(showId: string, action: "add" | "remove"): Promise<void> {
   await apiFetch("/api/watchlist", {
     method: action === "add" ? "POST" : "DELETE",
-    headers: { Cookie: sessionCookieHeader(token) },
     body: JSON.stringify({ showId }),
   });
 }

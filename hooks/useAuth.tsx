@@ -10,8 +10,6 @@ import {
   register as apiRegister,
   logout as apiLogout,
   getMe,
-  getStoredToken,
-  storeToken,
   type AuthUser,
 } from "../lib/api";
 import { Sentry } from "../lib/sentry";
@@ -20,6 +18,7 @@ import { Sentry } from "../lib/sentry";
 
 interface AuthContextValue {
   user: AuthUser | null;
+  /** Always null in the cookie-jar-based auth model — kept for back-compat with callers. */
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -35,8 +34,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser]     = useState<AuthUser | null>(null);
-  const [token, setToken]   = useState<string | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Mirror the current user into Sentry so crashes are attributed. No-op in
@@ -45,62 +43,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     Sentry.setUser(user ? { id: user.id, email: user.email ?? undefined } : null);
   }, [user]);
 
-  // Restore session on mount
+  // Restore session on mount — the Auth.js session cookie is persisted by
+  // NSURLSession's cookie jar across app launches, so we just ask the server.
   useEffect(() => {
     (async () => {
-      try {
-        const stored = await getStoredToken();
-        if (stored) {
-          const me = await getMe(stored);
-          setToken(stored);
-          setUser(me);
-        }
-      } catch {
-        // Token expired or invalid — clear silently
-        await apiLogout();
-      } finally {
-        setLoading(false);
-      }
+      const me = await getMe();
+      setUser(me);
+      setLoading(false);
     })();
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     const me = await apiLogin(email, password);
-    const stored = await getStoredToken();
-    setToken(stored);
     setUser(me);
   }, []);
 
   const register = useCallback(
     async (name: string, email: string, password: string) => {
-      const { user: newUser } = await apiRegister(name, email, password);
+      await apiRegister(name, email, password);
       // Auto-login after register
-      await login(email, password);
+      const me = await apiLogin(email, password);
+      setUser(me);
     },
-    [login]
+    []
   );
 
   const logout = useCallback(async () => {
     await apiLogout();
-    setToken(null);
     setUser(null);
   }, []);
 
   const refresh = useCallback(async () => {
-    try {
-      const stored = await getStoredToken();
-      if (stored) {
-        const me = await getMe(stored);
-        setToken(stored);
-        setUser(me);
-      }
-    } catch {
-      await logout();
-    }
-  }, [logout]);
+    const me = await getMe();
+    setUser(me);
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, refresh }}>
+    <AuthContext.Provider value={{ user, token: null, loading, login, register, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );

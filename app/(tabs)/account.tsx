@@ -65,18 +65,18 @@ function MenuItem({
 }
 
 export default function AccountScreen() {
-  const { user, token, logout, loading: authLoading } = useAuth();
-  const [sub, setSub]           = useState<SubInfo | null>(null);
+  const { user, logout, loading: authLoading } = useAuth();
+  const [sub, setSub] = useState<SubInfo | null>(null);
   const [subLoading, setSubLoading] = useState(false);
 
   useEffect(() => {
-    if (token) {
+    if (user) {
       setSubLoading(true);
-      getSubscription(token)
+      getSubscription()
         .then(setSub)
         .finally(() => setSubLoading(false));
     }
-  }, [token]);
+  }, [user]);
 
   const [restoring, setRestoring] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -146,15 +146,13 @@ export default function AccountScreen() {
           text: "Delete Account",
           style: "destructive",
           onPress: async () => {
-            if (!token) return;
+            if (!user) return;
             setDeleting(true);
             try {
               const res = await fetch(`${WEB_URL}/api/account/delete`, {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Cookie: `__Secure-authjs.session-token=${token}; authjs.session-token=${token}; __Secure-next-auth.session-token=${token}; next-auth.session-token=${token}`,
-                },
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
               });
               if (!res.ok) {
                 throw new Error(`HTTP ${res.status}`);

@@ -101,13 +101,13 @@ export default function WatchScreen() {
       const pos = player.currentTime ?? 0;
       if (pos > 0 && Math.abs(pos - progressRef.current) > 5) {
         progressRef.current = pos;
-        saveProgress(episode.id, Math.round(pos), token).catch(() => {});
+        saveProgress(episode.id, Math.round(pos)).catch(() => {});
       }
     }, 15_000);
     return () => {
       if (saveTimerRef.current) clearInterval(saveTimerRef.current);
     };
-  }, [episode, token, player]);
+  }, [episode, player]);
 
   // Hide status bar for immersive video
   useEffect(() => {
@@ -117,11 +117,11 @@ export default function WatchScreen() {
 
   const exitWatch = useCallback(() => {
     const pos = player.currentTime ?? 0;
-    if (pos > 0 && token && episode) {
-      saveProgress(episode.id, Math.round(pos), token).catch(() => {});
+    if (pos > 0 && episode) {
+      saveProgress(episode.id, Math.round(pos)).catch(() => {});
     }
     router.back();
-  }, [player, token, episode]);
+  }, [player, episode]);
 
   const enterFullscreen = useCallback(() => {
     // expo-video exposes a native fullscreen presentation via the VideoView
