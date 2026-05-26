@@ -1,16 +1,26 @@
 import { useEffect, useState } from "react";
-import { Stack, router } from "expo-router";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useFonts, BebasNeue_400Regular } from "@expo-google-fonts/bebas-neue";
 import {
   BarlowCondensed_600SemiBold,
   BarlowCondensed_700Bold,
 } from "@expo-google-fonts/barlow-condensed";
-import { View } from "react-native";
+import * as SplashScreen from "expo-splash-screen";
 import { AuthProvider } from "../hooks/useAuth";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Sentry } from "../lib/sentry";
 import { hasPassedAgeGate } from "./age-gate";
+
+// Keep the OS splash up until JS has decided what to render. Without this the
+// Expo splash dismisses ~150ms after launch and we're stuck on a black <View>
+// while fonts + AsyncStorage resolve. That manifested as a black-screen on
+// first install of build 2.
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
+// Default to "not yet checked". `null` distinguishes "we don't know" from
+// "yes, gated" (true) vs "no, needs gate" (false).
+let agePassedCache: boolean | null = null;
 
 function RootLayoutImpl() {
   // Brand display fonts. Until they load, fall back to a hidden black screen
@@ -21,25 +31,36 @@ function RootLayoutImpl() {
     BarlowCondensed_700Bold,
   });
 
-  // App Store guideline 1.1.6: 17+ content must gate at first launch. The
-  // age-gate screen writes to AsyncStorage on success; here we just redirect
-  // any session that hasn't passed it yet.
-  const [ageReady, setAgeReady] = useState(false);
+  // App Store guideline 1.1.6: 17+ content must gate at first launch.
+  // We *don't* call router.replace inside an effect — that races with Stack
+  // mount and renders a permanent black screen if the router isn't ready yet.
+  // Instead we set the Stack's initialRouteName conditionally below.
+  const [agePassed, setAgePassed] = useState<boolean | null>(agePassedCache);
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const passed = await hasPassedAgeGate();
       if (cancelled) return;
-      if (!passed) router.replace("/age-gate");
-      setAgeReady(true);
+      agePassedCache = passed;
+      setAgePassed(passed);
     })();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  if (!fontsLoaded || !ageReady) {
-    return <View style={{ flex: 1, backgroundColor: "#000000" }} />;
+  const ready = fontsLoaded && agePassed !== null;
+
+  // Hide the native splash the moment we have enough state to render.
+  useEffect(() => {
+    if (ready) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [ready]);
+
+  if (!ready) {
+    // Returning null keeps the OS splash visible (we haven't hidden it yet).
+    return null;
   }
 
   return (
@@ -47,17 +68,24 @@ function RootLayoutImpl() {
       <AuthProvider>
         <StatusBar style="light" backgroundColor="#000000" />
         <Stack
+          // Set the initial route based on age-gate state. expo-router uses
+          // this to decide which screen mounts first when the Stack initializes,
+          // which avoids the "router.replace inside useEffect" race that caused
+          // a permanent black screen on first launch in build 2.
+          initialRouteName={agePassed ? "(tabs)" : "age-gate"}
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: "#000000" },
             animation: "slide_from_right",
           }}
         >
-          {/* TV platforms get their own screen hierarchy */}
+          <Stack.Screen
+            name="age-gate"
+            options={{ headerShown: false, animation: "fade", gestureEnabled: false }}
+          />
           <Stack.Screen name="(tv)"    options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)"  options={{ headerShown: false }} />
           <Stack.Screen name="(auth)"  options={{ headerShown: false, animation: "slide_from_bottom" }} />
-          <Stack.Screen name="age-gate" options={{ headerShown: false, animation: "fade", presentation: "modal", gestureEnabled: false }} />
           <Stack.Screen name="show/[slug]" options={{ headerShown: false }} />
           <Stack.Screen name="watch/[id]"  options={{ headerShown: false, animation: "fade" }} />
         </Stack>
