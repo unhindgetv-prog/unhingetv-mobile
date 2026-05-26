@@ -116,7 +116,7 @@ async function postValidate(body: object, sessionToken: string): Promise<Validat
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Cookie: `__Secure-next-auth.session-token=${sessionToken}; next-auth.session-token=${sessionToken}`,
+      Cookie: `__Secure-authjs.session-token=${sessionToken}; authjs.session-token=${sessionToken}; __Secure-next-auth.session-token=${sessionToken}; next-auth.session-token=${sessionToken}`,
     },
     body: JSON.stringify(body),
   });

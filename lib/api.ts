@@ -34,12 +34,17 @@ export async function clearToken(): Promise<void> {
 }
 
 /**
- * NextAuth uses two cookie names depending on whether the request is HTTPS:
- * dev (HTTP) → `next-auth.session-token`, prod (HTTPS) → `__Secure-next-auth.session-token`.
- * Mobile sends both so the server picks up whichever it's configured to look for.
+ * Auth.js v5 (NextAuth's new name) uses `authjs.*` cookie names — NOT `next-auth.*`
+ * like v4. Cookie name also has the `__Secure-` prefix in HTTPS production.
+ * We send all four common variants so the server matches whichever it expects.
  */
 export function sessionCookieHeader(token: string): string {
-  return `__Secure-next-auth.session-token=${token}; next-auth.session-token=${token}`;
+  return [
+    `__Secure-authjs.session-token=${token}`,
+    `authjs.session-token=${token}`,
+    `__Secure-next-auth.session-token=${token}`,
+    `next-auth.session-token=${token}`,
+  ].join("; ");
 }
 
 // ─── Base fetch ───────────────────────────────────────────────────────────────
@@ -91,11 +96,14 @@ export async function login(email: string, password: string): Promise<AuthUser> 
     redirect: "manual",
   });
 
-  // NextAuth returns a redirect on success — extract session cookie
+  // Auth.js v5 returns a 302 on success — extract session token from Set-Cookie.
+  // Try Auth.js v5 cookie names first (current production), fall back to v4 names.
   const setCookie = res.headers.get("set-cookie") ?? "";
-  const tokenMatch = setCookie.match(/next-auth\.session-token=([^;]+)/);
-  const secureMatch = setCookie.match(/__Secure-next-auth\.session-token=([^;]+)/);
-  const sessionToken = tokenMatch?.[1] ?? secureMatch?.[1];
+  const sessionToken =
+    setCookie.match(/__Secure-authjs\.session-token=([^;]+)/)?.[1] ??
+    setCookie.match(/authjs\.session-token=([^;]+)/)?.[1] ??
+    setCookie.match(/__Secure-next-auth\.session-token=([^;]+)/)?.[1] ??
+    setCookie.match(/next-auth\.session-token=([^;]+)/)?.[1];
 
   if (!sessionToken) throw new Error("Invalid email or password");
   await storeToken(sessionToken);
