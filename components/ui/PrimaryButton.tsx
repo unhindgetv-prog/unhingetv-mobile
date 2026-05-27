@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     alignSelf: "flex-start",
   },
-  fill: { ...StyleSheet.absoluteFillObject },
+  fill: { ...StyleSheet.absoluteFill },
   outlineFill: {
     borderWidth: 1,
     borderColor: Colors.borderBright,

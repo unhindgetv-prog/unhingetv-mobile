@@ -52,9 +52,9 @@ export function GlassCard({ children, glow, redTint, style, radius = Radius.lg }
 
 const styles = StyleSheet.create({
   wrap: { overflow: "hidden" },
-  fill: { ...StyleSheet.absoluteFillObject },
+  fill: { ...StyleSheet.absoluteFill },
   border: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderWidth: 1,
   },
   content: { padding: 0 },

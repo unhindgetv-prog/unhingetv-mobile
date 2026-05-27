@@ -56,11 +56,11 @@ function EpisodeRow({
         {ep.thumbnail ? (
           <Image
             source={{ uri: ep.thumbnail }}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
             resizeMode="cover"
           />
         ) : (
-          <View style={[StyleSheet.absoluteFillObject, { justifyContent: "center", alignItems: "center" }]}>
+          <View style={[StyleSheet.absoluteFill, { justifyContent: "center", alignItems: "center" }]}>
             <Play size={18} color={Colors.textFaint} />
           </View>
         )}
@@ -147,16 +147,16 @@ export default function ShowDetailScreen() {
           {show.banner ?? show.thumbnail ? (
             <Image
               source={{ uri: (show.banner ?? show.thumbnail)! }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
               resizeMode="cover"
             />
           ) : (
-            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: Colors.muted }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: Colors.muted }]} />
           )}
           <LinearGradient
             colors={["rgba(0,0,0,0.3)", "transparent", "rgba(0,0,0,0.4)", "#000000"]}
             locations={[0, 0.25, 0.65, 1]}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
           />
           <View style={styles.bannerGlow} />
         </View>
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   lockOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",

@@ -53,18 +53,18 @@ function ShowCard({ show }: { show: Show }) {
         {show.thumbnail ? (
           <Image
             source={{ uri: show.thumbnail }}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
             resizeMode="cover"
           />
         ) : (
-          <View style={[StyleSheet.absoluteFillObject, styles.cardPlaceholder]}>
+          <View style={[StyleSheet.absoluteFill, styles.cardPlaceholder]}>
             <Play size={24} color={Colors.textFaint} />
           </View>
         )}
         <LinearGradient
           colors={["transparent", "rgba(0,0,0,0.9)"]}
           locations={[0.45, 1]}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
         <View style={[styles.accessPill, accessStyle(show.accessType)]}>
           <Text style={styles.accessText}>{accessLabel(show.accessType)}</Text>

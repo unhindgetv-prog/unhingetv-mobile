@@ -69,7 +69,7 @@ export default function SignupScreen() {
         locations={[0, 0.4, 1]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       <View style={styles.redGlowBlob} pointerEvents="none" />
 

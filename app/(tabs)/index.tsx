@@ -53,25 +53,25 @@ function HeroCard({ show }: { show: Show }) {
       {show.banner || show.thumbnail ? (
         <Image
           source={{ uri: (show.banner ?? show.thumbnail)! }}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
           resizeMode="cover"
         />
       ) : (
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: Colors.muted }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: Colors.muted }]} />
       )}
 
       {/* Triple gradient — top fade-in, middle dark, bottom hard black */}
       <LinearGradient
         colors={["rgba(0,0,0,0.55)", "transparent", "rgba(0,0,0,0.45)", "rgba(0,0,0,0.98)"]}
         locations={[0, 0.25, 0.6, 1]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       {/* Left vignette for text legibility */}
       <LinearGradient
         colors={["rgba(0,0,0,0.7)", "transparent"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.7, y: 0 }}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       {/* Red brand glow in bottom-left corner */}
       <View style={styles.heroGlow} />
@@ -130,16 +130,16 @@ function ShowCard({ show, rank }: { show: Show; rank?: number }) {
     >
       <View style={styles.cardImg}>
         {show.thumbnail ? (
-          <Image source={{ uri: show.thumbnail }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+          <Image source={{ uri: show.thumbnail }} style={StyleSheet.absoluteFill} resizeMode="cover" />
         ) : (
-          <View style={[StyleSheet.absoluteFillObject, styles.cardPlaceholder]}>
+          <View style={[StyleSheet.absoluteFill, styles.cardPlaceholder]}>
             <Play size={22} color={Colors.textFaint} />
           </View>
         )}
         <LinearGradient
           colors={["transparent", "rgba(0,0,0,0.85)"]}
           locations={[0.45, 1]}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
         <View style={[styles.accessPill, accessStyle(show.accessType)]}>
           <Text style={styles.accessPillText}>{accessLabel(show.accessType)}</Text>
@@ -174,14 +174,14 @@ function ComingSoonCard({ show }: { show: Show }) {
     >
       <View style={styles.csImg}>
         {show.thumbnail ? (
-          <Image source={{ uri: show.thumbnail }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+          <Image source={{ uri: show.thumbnail }} style={StyleSheet.absoluteFill} resizeMode="cover" />
         ) : (
-          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: Colors.muted }]} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: Colors.muted }]} />
         )}
         <LinearGradient
           colors={["rgba(0,0,0,0.25)", "transparent", "rgba(0,0,0,0.92)"]}
           locations={[0, 0.5, 1]}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
         {/* Coming Soon ribbon */}
         <View style={styles.csRibbon}>

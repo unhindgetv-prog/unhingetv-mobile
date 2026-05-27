@@ -59,7 +59,7 @@ function TVShowCard({ show, focused }: { show: Show; focused: boolean }) {
       )}
       <LinearGradient
         colors={["transparent", "rgba(0,0,0,0.85)"]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       <View style={styles.cardInfo}>
         <Text style={styles.cardTitle} numberOfLines={2}>{show.title}</Text>
@@ -109,14 +109,14 @@ export default function TVHomeScreen() {
           {featured.banner || featured.thumbnail ? (
             <Image
               source={{ uri: (featured.banner ?? featured.thumbnail)! }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
               resizeMode="cover"
             />
           ) : null}
           <LinearGradient
             colors={["transparent", "rgba(0,0,0,0.5)", "rgba(0,0,0,0.97)"]}
             locations={[0, 0.5, 1]}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
           />
           <View style={styles.heroContent}>
             <Text style={styles.heroTitle}>{featured.title}</Text>
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.red,
     transform: [{ scale: 1.05 }],
   },
-  cardImg:     { ...StyleSheet.absoluteFillObject as any },
+  cardImg:     { ...StyleSheet.absoluteFill as any },
   cardInfo:    { position: "absolute", bottom: 0, left: 0, right: 0, padding: 12 },
   cardTitle:   { fontSize: 15, fontWeight: "800", color: Colors.white, marginBottom: 6 },
   accessBadge: { borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, alignSelf: "flex-start" },

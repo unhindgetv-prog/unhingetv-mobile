@@ -66,7 +66,7 @@ function RootLayoutImpl() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <StatusBar style="light" backgroundColor="#000000" />
+        <StatusBar style="light" />
         <Stack
           // Set the initial route based on age-gate state. expo-router uses
           // this to decide which screen mounts first when the Stack initializes,

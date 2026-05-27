@@ -175,11 +175,11 @@ export default function SearchScreen() {
                     {show.thumbnail ? (
                       <Image
                         source={{ uri: show.thumbnail }}
-                        style={StyleSheet.absoluteFillObject}
+                        style={StyleSheet.absoluteFill}
                         resizeMode="cover"
                       />
                     ) : (
-                      <View style={[StyleSheet.absoluteFillObject, { justifyContent: "center", alignItems: "center" }]}>
+                      <View style={[StyleSheet.absoluteFill, { justifyContent: "center", alignItems: "center" }]}>
                         <Film size={20} color={Colors.textFaint} />
                       </View>
                     )}
@@ -213,11 +213,11 @@ export default function SearchScreen() {
                   {ep.thumbnail ? (
                     <Image
                       source={{ uri: ep.thumbnail }}
-                      style={StyleSheet.absoluteFillObject}
+                      style={StyleSheet.absoluteFill}
                       resizeMode="cover"
                     />
                   ) : (
-                    <View style={[StyleSheet.absoluteFillObject, { justifyContent: "center", alignItems: "center" }]}>
+                    <View style={[StyleSheet.absoluteFill, { justifyContent: "center", alignItems: "center" }]}>
                       <Play size={18} color={Colors.textFaint} />
                     </View>
                   )}

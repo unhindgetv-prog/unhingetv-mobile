@@ -154,7 +154,7 @@ export default function WatchScreen() {
         <LinearGradient
           colors={["#1a0000", "#000000", "#000000"] as readonly [string, string, string]}
           locations={[0, 0.4, 1]}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
         <View
           style={[
@@ -212,14 +212,14 @@ export default function WatchScreen() {
           <VideoView
             ref={videoRef as React.RefObject<VideoView>}
             player={player}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
             contentFit="contain"
             nativeControls
-            allowsFullscreen
+            fullscreenOptions={{ enable: true }}
             allowsPictureInPicture
           />
         ) : (
-          <View style={[styles.videoFallback, StyleSheet.absoluteFillObject]}>
+          <View style={[styles.videoFallback, StyleSheet.absoluteFill]}>
             <Play size={32} color={Colors.textFaint} />
           </View>
         )}

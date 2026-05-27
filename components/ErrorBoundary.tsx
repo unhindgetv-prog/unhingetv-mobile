@@ -35,7 +35,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <LinearGradient
             colors={["#1a0000", "#000000", "#000000"] as readonly [string, string, string]}
             locations={[0, 0.5, 1]}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
           />
           <View style={styles.iconCircle}>
             <AlertTriangle size={32} color={Colors.white} strokeWidth={2.5} />
