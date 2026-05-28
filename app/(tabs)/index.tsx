@@ -142,7 +142,7 @@ function ShowCard({ show, rank }: { show: Show; rank?: number }) {
           style={StyleSheet.absoluteFill}
         />
         <View style={[styles.accessPill, accessStyle(show.accessType)]}>
-          <Text style={styles.accessPillText}>{accessLabel(show.accessType)}</Text>
+          <Text style={[styles.accessPillText, { color: accessTextColor(show.accessType) }]}>{accessLabel(show.accessType)}</Text>
         </View>
         {rank != null && (
           <View style={styles.rankBadge}>
@@ -212,12 +212,18 @@ function ComingSoonCard({ show }: { show: Show }) {
 function accessLabel(type: string) {
   if (type === "FREE") return "FREE";
   if (type === "PPV")  return "PPV";
-  return "MEMBERS";
+  return "★ VIP"; // matches web ShowCard gold VIP badge (replaces "MEMBERS"/Lock icon for brand parity)
 }
 function accessStyle(type: string) {
   if (type === "FREE") return { backgroundColor: "rgba(34,197,94,0.85)", borderColor: Colors.green };
   if (type === "PPV")  return { backgroundColor: "rgba(249,115,22,0.85)", borderColor: Colors.orange };
-  return { backgroundColor: "rgba(59,130,246,0.85)", borderColor: Colors.blue };
+  // SUBSCRIPTION → gold VIP pill (matches web ShowCard treatment)
+  return { backgroundColor: Colors.gold, borderColor: "#c69900" };
+}
+// Black text reads on gold; white reads on green/orange. Picks per access type.
+function accessTextColor(type: string) {
+  if (type === "SUBSCRIPTION") return Colors.black;
+  return Colors.white;
 }
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
