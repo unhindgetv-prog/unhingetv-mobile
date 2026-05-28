@@ -46,3 +46,10 @@ google-service-account*.json
 
 # Local EAS build outputs
 build-artifacts/
+.eas-keys/
+.env.local
+
+# Large build binaries (use EAS / stores instead)
+*.apk
+*.aab
+*.ipa
