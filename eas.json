@@ -54,7 +54,8 @@
       "distribution": "internal",
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_STORE": "amazon"
+        "EXPO_PUBLIC_STORE": "amazon",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       },
       "android": {
         "buildType": "apk",
