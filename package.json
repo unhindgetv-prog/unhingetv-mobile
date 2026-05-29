@@ -11,6 +11,7 @@
   "dependencies": {
     "@expo-google-fonts/barlow-condensed": "^0.4.1",
     "@expo-google-fonts/bebas-neue": "^0.4.1",
+    "@mux/mux-data-react-native-video": "^0.19.20",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-tvos/config-tv": "^0.1.6",
     "@sentry/react-native": "~7.11.0",
@@ -29,7 +30,6 @@
     "expo-splash-screen": "~56.0.10",
     "expo-status-bar": "~56.0.4",
     "expo-updates": "~56.0.17",
-    "expo-video": "~56.1.2",
     "lucide-react-native": "^1.14.0",
     "react": "19.2.3",
     "react-native": "0.85.3",
@@ -40,6 +40,7 @@
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "4.25.2",
     "react-native-svg": "15.15.4",
+    "react-native-video": "^6.19.2",
     "react-native-worklets": "0.8.3"
   },
   "devDependencies": {

@@ -9,8 +9,16 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useLocalSearchParams, router, useFocusEffect } from "expo-router";
-import { VideoView, useVideoPlayer } from "expo-video";
+import Video, { type VideoRef } from "react-native-video";
+import muxReactNativeVideo from "@mux/mux-data-react-native-video";
+import Constants from "expo-constants";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+// Wrap react-native-video with Mux Data for QoE/engagement metrics.
+const MuxVideo = muxReactNativeVideo(Video);
+const MUX_ENV_KEY =
+  (Constants.expoConfig?.extra as { muxEnvKey?: string } | undefined)?.muxEnvKey ??
+  "9og1ccmli19nha7mho0hklmb9";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { ArrowLeft, AlertCircle, Maximize2, Play, Loader } from "lucide-react-native";
@@ -34,7 +42,7 @@ export default function WatchScreen() {
   const { token } = useAuth();
   const insets = useSafeAreaInsets();
   // Re-renders on rotation so the video container snaps to the new dimensions
-  // without remounting the VideoView (preserves playback state).
+  // without remounting the video (preserves playback state).
   const { width: winW, height: winH } = useWindowDimensions();
   const isLandscape = winW > winH;
 
@@ -43,7 +51,9 @@ export default function WatchScreen() {
   const [error, setError] = useState<string | null>(null);
   const progressRef = useRef<number>(0);
   const saveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const videoRef = useRef<VideoView | null>(null);
+  const videoRef = useRef<VideoRef | null>(null);
+  const currentTimeRef = useRef<number>(0);
+  const [paused, setPaused] = useState(false);
 
   // Build HLS URL from Mux playback ID.
   // Signed-policy assets: server returns muxStreamUrl with a baked-in 6h JWT token.
@@ -54,10 +64,6 @@ export default function WatchScreen() {
       ? `${MUX_STREAM_BASE}/${episode.muxPlaybackId}.m3u8`
       : null;
 
-  const player = useVideoPlayer(muxUrl ?? "", (p) => {
-    p.loop = false;
-    p.play();
-  });
 
   // Unlock orientation while watching; restore portrait on exit. Using
   // useFocusEffect (not useEffect) so we re-lock if user backgrounds the app
@@ -98,7 +104,7 @@ export default function WatchScreen() {
   useEffect(() => {
     if (!episode || !token) return;
     saveTimerRef.current = setInterval(() => {
-      const pos = player.currentTime ?? 0;
+      const pos = currentTimeRef.current ?? 0;
       if (pos > 0 && Math.abs(pos - progressRef.current) > 5) {
         progressRef.current = pos;
         saveProgress(episode.id, Math.round(pos)).catch(() => {});
@@ -107,7 +113,7 @@ export default function WatchScreen() {
     return () => {
       if (saveTimerRef.current) clearInterval(saveTimerRef.current);
     };
-  }, [episode, player]);
+  }, [episode]);
 
   // Hide status bar for immersive video
   useEffect(() => {
@@ -116,27 +122,22 @@ export default function WatchScreen() {
   }, []);
 
   const exitWatch = useCallback(() => {
-    const pos = player.currentTime ?? 0;
+    const pos = currentTimeRef.current ?? 0;
     if (pos > 0 && episode) {
       saveProgress(episode.id, Math.round(pos)).catch(() => {});
     }
     router.back();
-  }, [player, episode]);
+  }, [episode]);
 
   const enterFullscreen = useCallback(() => {
-    // expo-video exposes a native fullscreen presentation via the VideoView
-    // imperative API. The ref method varies by SDK; guard for it.
-    const ref = videoRef.current as unknown as { enterFullscreen?: () => void } | null;
-    ref?.enterFullscreen?.();
+    // react-native-video imperative fullscreen.
+    videoRef.current?.presentFullscreenPlayer?.();
   }, []);
 
   // Siri Remote / Apple TV: menu = back, play/pause = toggle playback
   useTVRemote({
     menu: exitWatch,
-    playPause: () => {
-      if (player.playing) player.pause();
-      else player.play();
-    },
+    playPause: () => setPaused((p) => !p),
   });
 
   if (loading) {
@@ -209,14 +210,29 @@ export default function WatchScreen() {
       {/* Video player */}
       <View style={[styles.videoContainer, videoStyle]}>
         {muxUrl ? (
-          <VideoView
-            ref={videoRef as React.RefObject<VideoView>}
-            player={player}
+          <MuxVideo
+            ref={videoRef}
+            source={{ uri: muxUrl }}
             style={StyleSheet.absoluteFill}
-            contentFit="contain"
-            nativeControls
-            fullscreenOptions={{ enable: true }}
-            allowsPictureInPicture
+            resizeMode="contain"
+            controls
+            paused={paused}
+            playInBackground={false}
+            onProgress={({ currentTime }: { currentTime: number }) => {
+              currentTimeRef.current = currentTime;
+            }}
+            onEnd={exitWatch}
+            muxOptions={{
+              application_name: "UnhingeTV Mobile",
+              data: {
+                env_key: MUX_ENV_KEY,
+                player_name: "UnhingeTV Mobile",
+                video_id: episode.id,
+                video_title: episode.title,
+                video_series: "UnhingeTV",
+                video_stream_type: "on-demand",
+              },
+            }}
           />
         ) : (
           <View style={[styles.videoFallback, StyleSheet.absoluteFill]}>
