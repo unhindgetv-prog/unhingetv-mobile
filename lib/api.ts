@@ -159,6 +159,22 @@ export async function getComingSoonShows(): Promise<Show[]> {
   return apiFetch<Show[]>("/api/shows/coming-soon");
 }
 
+export interface Trailer {
+  id: string;
+  showSlug: string;
+  showTitle: string;
+  label: string;
+  muxPlaybackId: string;
+  streamUrl: string;
+  posterUrl: string;
+  durationSeconds: number | null;
+}
+
+export async function getTrailers(): Promise<Trailer[]> {
+  const data = await apiFetch<{ trailers: Trailer[] }>("/api/trailers");
+  return data.trailers ?? [];
+}
+
 export async function getShow(slug: string): Promise<{ show: Show; seasons: Season[] }> {
   const data = await apiFetch<Show & { seasons: Season[] }>(`/api/shows/${slug}`);
   const { seasons, ...show } = data;

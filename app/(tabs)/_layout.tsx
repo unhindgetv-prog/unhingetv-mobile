@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import { Platform, View } from "react-native";
-import { Home, Film, Search, User } from "lucide-react-native";
+import { Home, Film, Search, User, Clapperboard } from "lucide-react-native";
 import { Colors, Fonts } from "../../constants/theme";
 
 export default function TabLayout() {
@@ -47,6 +47,17 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused, size }) => (
             <TabIcon focused={focused}>
               <Film color={color} size={size - 3} strokeWidth={focused ? 2.4 : 2} />
+            </TabIcon>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="trailers"
+        options={{
+          title: "Trailers",
+          tabBarIcon: ({ color, focused, size }) => (
+            <TabIcon focused={focused}>
+              <Clapperboard color={color} size={size - 3} strokeWidth={focused ? 2.4 : 2} />
             </TabIcon>
           ),
         }}
