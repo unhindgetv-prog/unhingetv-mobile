@@ -20,7 +20,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react-native";
-import { getShow, type Show, type Season, type Episode } from "../../lib/api";
+import { getShow, getSubscription, type Show, type Season, type Episode } from "../../lib/api";
 import { Colors, Fonts, FontSizes, Radius, Spacing } from "../../constants/theme";
 import { useAuth } from "../../hooks/useAuth";
 import { ShowDetailSkeleton } from "../../components/ui";
@@ -100,6 +100,32 @@ export default function ShowDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [descExpanded, setDescExpanded] = useState(false);
+  // Real entitlement state. The auth-session user object does NOT carry
+  // subscription (web session callback only sets id+role), so we must fetch it
+  // — same source the Account screen uses to show "Active — YEARLY". Without
+  // this, paid episodes locked even for active subscribers and admins.
+  const [entitled, setEntitled] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setEntitled(false);
+      return;
+    }
+    // ADMIN/MODERATOR get comp access (mirrors server lib/entitlements.ts).
+    if (user.role === "ADMIN" || user.role === "MODERATOR") {
+      setEntitled(true);
+      return;
+    }
+    let active = true;
+    getSubscription()
+      .then((sub) => {
+        if (active) setEntitled(sub?.status === "ACTIVE" || sub?.status === "TRIALING");
+      })
+      .catch(() => active && setEntitled(false));
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   useEffect(() => {
     if (!slug) return;
@@ -117,10 +143,7 @@ export default function ShowDetailScreen() {
   }, [slug]);
 
   const canWatch =
-    !!user &&
-    (show?.accessType === "FREE" ||
-      user.subscription?.status === "ACTIVE" ||
-      user.subscription?.status === "TRIALING");
+    !!user && (show?.accessType === "FREE" || entitled);
 
   if (loading) {
     return <ShowDetailSkeleton />;
