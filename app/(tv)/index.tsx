@@ -37,7 +37,6 @@ function TVNavBar({ activeIndex, onSelect }: { activeIndex: number; onSelect: (i
             style={[styles.navItem, activeIndex === i && styles.navItemActive]}
             onPress={() => onSelect(i)}
             activeOpacity={0.7}
-            hasTVPreferredFocus={i === 0}
           >
             <Text style={[styles.navLabel, activeIndex === i && styles.navLabelActive]}>
               {item}
@@ -148,7 +147,6 @@ export default function TVHomeScreen() {
             <FocusableTouchable
               onFocus={() => setFocusedIdx(index)}
               onPress={() => router.push(`/show/${item.slug}`)}
-              hasTVPreferredFocus={index === 0}
             >
               <TVShowCard show={item} focused={focusedIdx === index} />
             </FocusableTouchable>
