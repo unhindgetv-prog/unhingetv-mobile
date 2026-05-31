@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, type ComponentType } from "react";
 import {
   View,
   Text,
@@ -15,7 +15,19 @@ import Constants from "expo-constants";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Wrap react-native-video with Mux Data for QoE/engagement metrics.
-const MuxVideo = muxReactNativeVideo(Video);
+// Defensive: Mux Data is analytics-only and must NEVER block playback. If the
+// wrapper fails to initialize (interop / native-module issue), fall back to the
+// plain Video component. This fixes the "undefined is not a function" crash that
+// took down the whole watch screen (the wrapper was applied unguarded at module
+// load). Extra props like `muxOptions` are simply ignored by plain Video.
+let MuxVideo: ComponentType<any> = Video as unknown as ComponentType<any>;
+try {
+  if (typeof muxReactNativeVideo === "function") {
+    MuxVideo = muxReactNativeVideo(Video) as unknown as ComponentType<any>;
+  }
+} catch {
+  MuxVideo = Video as unknown as ComponentType<any>;
+}
 const MUX_ENV_KEY =
   (Constants.expoConfig?.extra as { muxEnvKey?: string } | undefined)?.muxEnvKey ??
   "9og1ccmli19nha7mho0hklmb9";
