@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, type ComponentType } from "react";
 import {
   View,
   Text,
@@ -10,12 +10,20 @@ import {
 } from "react-native";
 import { useLocalSearchParams, router, useFocusEffect } from "expo-router";
 import Video, { type VideoRef } from "react-native-video";
-import muxReactNativeVideo from "@mux/mux-data-react-native-video";
 import Constants from "expo-constants";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// Wrap react-native-video with Mux Data for QoE/engagement metrics.
-const MuxVideo = muxReactNativeVideo(Video);
+// Mux Data wrapper DISABLED for launch.
+// Root cause (Sentry, build 13, com.unhingetv.app@1.0.0+13, iOS 26):
+// "TypeError: undefined is not a function" thrown inside a PASSIVE EFFECT mount
+// (commitPassiveMountOnFiber → commitHookEffectListMount → init → forEach →
+// native apply/call). That is the Mux Data SDK's runtime init effect calling a
+// react-native-video method that doesn't exist under RN 0.85 / new architecture.
+// A module-load try/catch can't catch it because the throw happens later, in
+// React's effect-commit phase. Analytics must NEVER block playback, so we render
+// plain react-native-video. The `muxOptions` prop below is harmlessly ignored by
+// plain Video. Re-enable only after confirming Mux Data ↔ RN 0.85 compatibility.
+const MuxVideo: ComponentType<any> = Video as unknown as ComponentType<any>;
 const MUX_ENV_KEY =
   (Constants.expoConfig?.extra as { muxEnvKey?: string } | undefined)?.muxEnvKey ??
   "9og1ccmli19nha7mho0hklmb9";

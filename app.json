@@ -18,7 +18,6 @@
       ],
       "infoPlist": {
         "UIRequiresFullScreen": false,
-        "NSUserTrackingUsageDescription": "We use this to measure ad performance and improve recommendations. UnhingeTV will never sell your data.",
         "ITSAppUsesNonExemptEncryption": false,
         "UISupportedInterfaceOrientations": [
           "UIInterfaceOrientationPortrait"

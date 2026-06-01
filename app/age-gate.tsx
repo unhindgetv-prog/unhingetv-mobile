@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { postAgeGateRoute } from "../lib/initialRoute";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ShieldAlert } from "lucide-react-native";
@@ -62,7 +63,8 @@ export default function AgeGateScreen() {
       return;
     }
     await AsyncStorage.setItem(STORAGE_KEY, new Date().toISOString());
-    router.replace("/(tabs)");
+    // TV devices go to the 10-foot "(tv)" UI; phones/tablets to "(tabs)".
+    router.replace(postAgeGateRoute(Platform.isTV === true));
   }
 
   function inputStyle(key: string) {

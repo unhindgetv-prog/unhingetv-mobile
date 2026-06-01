@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { Platform } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { resolveInitialRoute } from "../lib/initialRoute";
 import { useFonts, BebasNeue_400Regular } from "@expo-google-fonts/bebas-neue";
 import {
   BarlowCondensed_600SemiBold,
@@ -68,11 +70,14 @@ function RootLayoutImpl() {
       <AuthProvider>
         <StatusBar style="light" />
         <Stack
-          // Set the initial route based on age-gate state. expo-router uses
-          // this to decide which screen mounts first when the Stack initializes,
-          // which avoids the "router.replace inside useEffect" race that caused
-          // a permanent black screen on first launch in build 2.
-          initialRouteName={agePassed ? "(tabs)" : "age-gate"}
+          // Set the initial route based on age-gate state AND device class.
+          // expo-router uses this to decide which screen mounts first when the
+          // Stack initializes, which avoids the "router.replace inside useEffect"
+          // race that caused a permanent black screen on first launch in build 2.
+          // TV devices (Platform.isTV — true only on EXPO_TV/react-native-tvos
+          // builds) boot into the 10-foot "(tv)" group; phones/tablets into
+          // "(tabs)". See lib/initialRoute for the pure decision + its tests.
+          initialRouteName={resolveInitialRoute(agePassed === true, Platform.isTV === true)}
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: "#000000" },

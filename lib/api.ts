@@ -5,7 +5,7 @@ import Constants from "expo-constants";
 //      the EAS Secret EXPO_PUBLIC_API_URL is set. Preferred source so the URL doesn't
 //      ship verbatim inside app.json (rotating it would otherwise need a new build).
 //   2. Constants.expoConfig.extra.apiUrl — legacy fallback that ships inside the
-//      bundle (currently "https://unhingetv.vercel.app" in app.json).
+//      bundle (currently "https://unhingetv.com" in app.json).
 //   3. Hardcoded apex — last-resort default so the app never points at localhost.
 const BASE_URL =
   (process.env.EXPO_PUBLIC_API_URL as string | undefined) ??

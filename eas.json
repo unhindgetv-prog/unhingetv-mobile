@@ -25,6 +25,7 @@
     },
     "production": {
       "autoIncrement": true,
+      "channel": "production",
       "ios": {
         "buildConfiguration": "Release"
       },
@@ -44,6 +45,9 @@
     },
     "android-tv": {
       "autoIncrement": true,
+      "env": {
+        "EXPO_TV": "1"
+      },
       "android": {
         "buildType": "app-bundle",
         "gradleCommand": ":app:bundleRelease"
@@ -54,6 +58,7 @@
       "distribution": "internal",
       "autoIncrement": true,
       "env": {
+        "EXPO_TV": "1",
         "EXPO_PUBLIC_STORE": "amazon",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       },
@@ -82,6 +87,19 @@
       "android": {
         "serviceAccountKeyPath": "./google-service-account.json",
         "track": "beta"
+      }
+    },
+    "internal": {
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal"
+      }
+    },
+    "android-tv": {
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "production",
+        "releaseStatus": "draft"
       }
     }
   }
