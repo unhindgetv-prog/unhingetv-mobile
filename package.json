@@ -11,7 +11,6 @@
   "dependencies": {
     "@expo-google-fonts/barlow-condensed": "^0.4.1",
     "@expo-google-fonts/bebas-neue": "^0.4.1",
-    "@mux/mux-data-react-native-video": "^0.19.20",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-tvos/config-tv": "^0.1.6",
     "@sentry/react-native": "~7.11.0",

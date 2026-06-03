@@ -10,23 +10,15 @@ import {
 } from "react-native";
 import { useLocalSearchParams, router, useFocusEffect } from "expo-router";
 import Video, { type VideoRef } from "react-native-video";
-import Constants from "expo-constants";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// Mux Data wrapper DISABLED for launch.
-// Root cause (Sentry, build 13, com.unhingetv.app@1.0.0+13, iOS 26):
-// "TypeError: undefined is not a function" thrown inside a PASSIVE EFFECT mount
-// (commitPassiveMountOnFiber → commitHookEffectListMount → init → forEach →
-// native apply/call). That is the Mux Data SDK's runtime init effect calling a
-// react-native-video method that doesn't exist under RN 0.85 / new architecture.
-// A module-load try/catch can't catch it because the throw happens later, in
-// React's effect-commit phase. Analytics must NEVER block playback, so we render
-// plain react-native-video. The `muxOptions` prop below is harmlessly ignored by
-// plain Video. Re-enable only after confirming Mux Data ↔ RN 0.85 compatibility.
+// Mux Data analytics REMOVED for launch. The @mux/mux-data-react-native-video
+// SDK threw "TypeError: undefined is not a function" inside a passive-mount
+// effect under RN 0.85 / new architecture (Sentry, build 13) — its init effect
+// called a react-native-video method that doesn't exist there. Analytics must
+// never block playback, so we render plain react-native-video. Re-add only after
+// confirming Mux Data ↔ RN 0.85 compatibility.
 const MuxVideo: ComponentType<any> = Video as unknown as ComponentType<any>;
-const MUX_ENV_KEY =
-  (Constants.expoConfig?.extra as { muxEnvKey?: string } | undefined)?.muxEnvKey ??
-  "9og1ccmli19nha7mho0hklmb9";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { ArrowLeft, AlertCircle, Maximize2, Play, Loader } from "lucide-react-native";
@@ -230,17 +222,6 @@ export default function WatchScreen() {
               currentTimeRef.current = currentTime;
             }}
             onEnd={exitWatch}
-            muxOptions={{
-              application_name: "UnhingeTV Mobile",
-              data: {
-                env_key: MUX_ENV_KEY,
-                player_name: "UnhingeTV Mobile",
-                video_id: episode.id,
-                video_title: episode.title,
-                video_series: "UnhingeTV",
-                video_stream_type: "on-demand",
-              },
-            }}
           />
         ) : (
           <View style={[styles.videoFallback, StyleSheet.absoluteFill]}>
